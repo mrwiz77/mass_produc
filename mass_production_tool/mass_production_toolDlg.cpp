@@ -65,6 +65,7 @@ BEGIN_MESSAGE_MAP(CmassproductiontoolDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDCANCEL, &CmassproductiontoolDlg::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
@@ -252,4 +253,9 @@ int CmassproductiontoolDlg::initLogView()
 
 	// TODO: 여기에 구현 코드 추가.
 	return 0;
+}
+void CmassproductiontoolDlg::OnBnClickedCancel()
+{
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	CDialogEx::OnCancel();
 }

@@ -2,7 +2,7 @@
 
 #include <afxdlgs.h>
 #include "resource.h"
-
+#include "GridCtrl_src/GridCtrl.h"
 // CRangeTestPage dialog
 class CRangeTestPage : public CPropertyPage
 {
@@ -22,7 +22,8 @@ protected:
 
 	CBrush m_backgroundBrush;
 	COLORREF m_backgroundColor;
-
+	CGridCtrl m_ctrlGrid;
+	void InitGrid();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 
