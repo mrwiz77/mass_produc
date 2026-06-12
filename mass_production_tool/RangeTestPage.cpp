@@ -53,7 +53,9 @@ void CRangeTestPage::InitGrid()
 	if (m_ctrlGrid.m_hWnd == NULL)
 	{
 		m_ctrlGrid.SubclassDlgItem(IDC_CUSTOM_RANGE_GRID, this);
+		m_ctrlGrid.ModifyStyle(0, WS_VSCROLL | WS_HSCROLL, SWP_FRAMECHANGED);
 	}
+	ResizeGridToClient();
 
 	CFont* pDialogFont = GetFont();
 	if (pDialogFont != NULL)
@@ -95,6 +97,28 @@ void CRangeTestPage::InitGrid()
 	RefreshGrid();
 }
 
+void CRangeTestPage::ResizeGridToClient()
+{
+	if (m_ctrlGrid.GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+
+	CRect rectClient;
+	GetClientRect(&rectClient);
+
+	CRect rectGrid;
+	m_ctrlGrid.GetWindowRect(&rectGrid);
+	ScreenToClient(&rectGrid);
+
+	rectGrid.right = rectClient.right - 4;
+	rectGrid.bottom = rectClient.bottom - 4;
+	if (rectGrid.Width() > 0 && rectGrid.Height() > 0)
+	{
+		m_ctrlGrid.MoveWindow(&rectGrid);
+	}
+}
+
 
 void CRangeTestPage::RefreshGrid()
 {
@@ -103,6 +127,7 @@ void CRangeTestPage::RefreshGrid()
 	{
 		return;
 	}
+	ResizeGridToClient();
 
 	const int nButtonCol = nColumnCount - 1;
 	const int nRowCount = static_cast<int>(m_gridRows.size()) + 1;
@@ -157,7 +182,8 @@ void CRangeTestPage::RefreshGrid()
 		m_ctrlGrid.SetItemText(nRow, nButtonCol, _T("RUN"));
 	}
 
-	m_ctrlGrid.SetRedraw(TRUE);
+	m_ctrlGrid.SetRedraw(TRUE, TRUE);
+	m_ctrlGrid.ShowScrollBar(SB_BOTH, TRUE);
 	m_ctrlGrid.Refresh();
 }
 LRESULT CRangeTestPage::OnGridButtonClick(WPARAM wParam, LPARAM lParam)

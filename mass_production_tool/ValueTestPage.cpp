@@ -66,7 +66,9 @@ void CValueTestPage::InitGrid()
 	if (m_ctrlGrid.m_hWnd == NULL)
 	{
 		m_ctrlGrid.SubclassDlgItem(IDC_CUSTOM_VALUE_GRID, this);
+		m_ctrlGrid.ModifyStyle(0, WS_VSCROLL | WS_HSCROLL, SWP_FRAMECHANGED);
 	}
+	ResizeGridToClient();
 
 	CFont* pDialogFont = GetFont();
 	if (pDialogFont != NULL)
@@ -108,6 +110,28 @@ void CValueTestPage::InitGrid()
 	RefreshGrid();
 }
 
+void CValueTestPage::ResizeGridToClient()
+{
+	if (m_ctrlGrid.GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+
+	CRect rectClient;
+	GetClientRect(&rectClient);
+
+	CRect rectGrid;
+	m_ctrlGrid.GetWindowRect(&rectGrid);
+	ScreenToClient(&rectGrid);
+
+	rectGrid.right = rectClient.right - 4;
+	rectGrid.bottom = rectClient.bottom - 4;
+	if (rectGrid.Width() > 0 && rectGrid.Height() > 0)
+	{
+		m_ctrlGrid.MoveWindow(&rectGrid);
+	}
+}
+
 void CValueTestPage::RefreshGrid()
 {
 	const int nColumnCount = static_cast<int>(m_columnNames.size());
@@ -115,6 +139,7 @@ void CValueTestPage::RefreshGrid()
 	{
 		return;
 	}
+	ResizeGridToClient();
 
 	const int nButtonCol = nColumnCount - 1;
 	const int nRowCount = static_cast<int>(m_gridRows.size()) + 1;
@@ -129,9 +154,9 @@ void CValueTestPage::RefreshGrid()
 		m_ctrlGrid.SetColumnWidth(nCol, 80);
 	}
 	m_ctrlGrid.SetColumnWidth(nButtonCol, 100);
-	m_ctrlGrid.SetColumnWidth(nButtonCol - 1, 130);
-	m_ctrlGrid.SetColumnWidth(nButtonCol - 2, 130);
-	m_ctrlGrid.SetColumnWidth(nButtonCol - 3, 130);
+	//m_ctrlGrid.SetColumnWidth(nButtonCol - 1, 130);
+	//m_ctrlGrid.SetColumnWidth(nButtonCol - 2, 130);
+	//m_ctrlGrid.SetColumnWidth(nButtonCol - 3, 130);
 	if (nColumnCount > 3)
 	{
 		m_ctrlGrid.SetColumnWidth(3, 100);
@@ -176,7 +201,8 @@ void CValueTestPage::RefreshGrid()
 		m_ctrlGrid.SetItemText(nRow, nButtonCol, _T("RUN"));
 	}
 
-	m_ctrlGrid.SetRedraw(TRUE);
+	m_ctrlGrid.SetRedraw(TRUE, TRUE);
+	m_ctrlGrid.ShowScrollBar(SB_BOTH, TRUE);
 	m_ctrlGrid.Refresh();
 }
 

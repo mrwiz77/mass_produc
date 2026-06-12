@@ -29,6 +29,7 @@ protected:
 	std::vector<CString> m_columnNames;
 	std::vector<std::vector<CString>> m_gridRows;
 	void InitGrid();
+	void ResizeGridToClient();
 	void RefreshGrid();
 	afx_msg LRESULT OnGridButtonClick(WPARAM wParam, LPARAM lParam);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);

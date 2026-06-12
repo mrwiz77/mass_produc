@@ -76,6 +76,20 @@ public:
 	static std::vector<CString> BuildRangeColumns();
 	static std::vector<CString> BuildSystemColumns();
 	static std::vector<CString> BuildSystemTypes();
+	static std::vector<CString> BuildSystemDutConfigColumns();
+	static std::vector<std::vector<CString>> BuildDefaultSystemDutConfigRows();
+
+	static BOOL LoadSheet(
+		const CString& strFilePath,
+		const std::vector<CString>& currentColumns,
+		std::vector<std::vector<CString>>& outRows,
+		int nSheetIndex);
+
+	static BOOL LoadSheetAll(
+		const CString& strFilePath,
+		std::vector<CString>& outColumns,
+		std::vector<std::vector<CString>>& outRows,
+		int nSheetIndex);
 
 	static BOOL LoadSystemSheet(
 		const CString& strFilePath,

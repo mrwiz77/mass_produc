@@ -491,6 +491,34 @@ std::vector<CString> CExcelXlsxHelper::BuildSystemTypes()
 	return types;
 }
 
+std::vector<CString> CExcelXlsxHelper::BuildSystemDutConfigColumns()
+{
+	std::vector<CString> columns;
+	columns.push_back(_T("GROUP"));
+	columns.push_back(_T("ITEM"));
+	columns.push_back(_T("VALUE"));
+	return columns;
+}
+
+std::vector<std::vector<CString>> CExcelXlsxHelper::BuildDefaultSystemDutConfigRows()
+{
+	std::vector<std::vector<CString>> rows;
+	rows.push_back({ _T("Timeout"), _T("FTM Enter Noti Receive Timeout"), _T("0") });
+	rows.push_back({ _T("Timeout"), _T("Boot Status Check Command Timeout"), _T("0") });
+	rows.push_back({ _T("Timeout"), _T("Test Mode Setting Command Timeout"), _T("0") });
+	rows.push_back({ _T("Timeout"), _T("DUT Version Check Command Timeout"), _T("0") });
+	rows.push_back({ _T("Timeout"), _T("Ethernet Test Command Timeout"), _T("0") });
+	rows.push_back({ _T("Timeout"), _T("Modem Info Test Command Timeout"), _T("0") });
+	rows.push_back({ _T("Timeout"), _T("Modem RF Test Command Timeout"), _T("0") });
+	rows.push_back({ _T("Timeout"), _T("FAN Test Command Timeout"), _T("0") });
+	rows.push_back({ _T("Timeout"), _T("CAN Test Command Timeout"), _T("0") });
+	rows.push_back({ _T("Factory Test Mode"), _T("Perform FACTORY_TEST Mode 진입 Noti Check"), _T("0") });
+	rows.push_back({ _T("Boot Status Check"), _T("Perform Boot Status Check"), _T("0") });
+	rows.push_back({ _T("Boot Status Check"), _T("MCU Boot 완료 Check"), _T("0") });
+	rows.push_back({ _T("Boot Status Check"), _T("AP Boot 완료 Check"), _T("0") });
+	rows.push_back({ _T("Boot Status Check"), _T("Modem Boot 완료 Check"), _T("0") });
+	return rows;
+}
 BOOL CExcelXlsxHelper::LoadSystemSheet(
 	const CString& strFilePath,
 	std::vector<std::vector<CString>>& outRows)
@@ -635,10 +663,11 @@ std::vector<std::vector<CString>> CExcelXlsxHelper::RemapRowsByHeader(
 	return remappedRows;
 }
 
-BOOL CExcelXlsxHelper::LoadValueSheet(
+BOOL CExcelXlsxHelper::LoadSheet(
 	const CString& strFilePath,
 	const std::vector<CString>& currentColumns,
-	std::vector<std::vector<CString>>& outRows)
+	std::vector<std::vector<CString>>& outRows,
+	int nSheetIndex)
 {
 	outRows.clear();
 	if (currentColumns.empty())
@@ -692,7 +721,8 @@ BOOL CExcelXlsxHelper::LoadValueSheet(
 	}
 
 	const CString strSharedStringsPath = strExtractFolder + _T("\\xl\\sharedStrings.xml");
-	const CString strSheetPath = strExtractFolder + _T("\\xl\\worksheets\\sheet1.xml");
+	CString strSheetPath;
+	strSheetPath.Format(_T("%s\\xl\\worksheets\\sheet%d.xml"), strExtractFolder.GetString(), max(1, nSheetIndex));
 
 	std::vector<CString> sharedStrings;
 	if (FileExists(strSharedStringsPath))
@@ -878,6 +908,231 @@ BOOL CExcelXlsxHelper::LoadValueSheet(
 	return TRUE;
 }
 
+BOOL CExcelXlsxHelper::LoadSheetAll(
+	const CString& strFilePath,
+	std::vector<CString>& outColumns,
+	std::vector<std::vector<CString>>& outRows,
+	int nSheetIndex)
+{
+	outColumns.clear();
+	outRows.clear();
+
+	TCHAR szTempPath[MAX_PATH] = { 0 };
+	if (GetTempPath(MAX_PATH, szTempPath) == 0)
+	{
+		return FALSE;
+	}
+
+	CString strWorkFolder;
+	strWorkFolder.Format(_T("%smp_tool_xlsx_%lu_%lu"), szTempPath, GetCurrentProcessId(), GetTickCount());
+	if (!CreateDirectory(strWorkFolder, NULL) && GetLastError() != ERROR_ALREADY_EXISTS)
+	{
+		return FALSE;
+	}
+
+	const CString strZipPath = strWorkFolder + _T("\\workbook.zip");
+	if (!CopyFile(strFilePath, strZipPath, FALSE))
+	{
+		DeleteDirectoryTree(strWorkFolder);
+		return FALSE;
+	}
+
+	BOOL bNeedUninitialize = FALSE;
+	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	if (SUCCEEDED(hr))
+	{
+		bNeedUninitialize = TRUE;
+	}
+	else if (hr != RPC_E_CHANGED_MODE)
+	{
+		DeleteDirectoryTree(strWorkFolder);
+		return FALSE;
+	}
+
+	const CString strExtractFolder = strWorkFolder + _T("\\xlsx");
+	const BOOL bCopied = CopyZipContent(strZipPath, strExtractFolder);
+	if (bNeedUninitialize)
+	{
+		CoUninitialize();
+	}
+
+	if (!bCopied)
+	{
+		DeleteDirectoryTree(strWorkFolder);
+		return FALSE;
+	}
+
+	const CString strSharedStringsPath = strExtractFolder + _T("\\xl\\sharedStrings.xml");
+	CString strSheetPath;
+	strSheetPath.Format(_T("%s\\xl\\worksheets\\sheet%d.xml"), strExtractFolder.GetString(), max(1, nSheetIndex));
+
+	std::vector<CString> sharedStrings;
+	if (FileExists(strSharedStringsPath))
+	{
+		MSXML2::IXMLDOMDocument2Ptr spSharedDoc;
+		if (LoadXmlDocument(strSharedStringsPath, spSharedDoc))
+		{
+			MSXML2::IXMLDOMNodeListPtr spStringNodes;
+			spSharedDoc->selectNodes(CComBSTR(L"/x:sst/x:si"), &spStringNodes);
+			long nStringCount = 0;
+			if (spStringNodes != NULL)
+			{
+				spStringNodes->get_length(&nStringCount);
+			}
+
+			for (long i = 0; i < nStringCount; ++i)
+			{
+				MSXML2::IXMLDOMNodePtr spStringNode;
+				spStringNodes->get_item(i, &spStringNode);
+
+				CString strCombined;
+				MSXML2::IXMLDOMNodeListPtr spTextNodes;
+				if (spStringNode != NULL && SUCCEEDED(spStringNode->selectNodes(CComBSTR(L".//x:t"), &spTextNodes)) && spTextNodes != NULL)
+				{
+					long nTextCount = 0;
+					spTextNodes->get_length(&nTextCount);
+					for (long nText = 0; nText < nTextCount; ++nText)
+					{
+						MSXML2::IXMLDOMNodePtr spTextNode;
+						spTextNodes->get_item(nText, &spTextNode);
+						strCombined += GetNodeText(spTextNode);
+					}
+				}
+				sharedStrings.push_back(strCombined);
+			}
+		}
+	}
+
+	MSXML2::IXMLDOMDocument2Ptr spSheetDoc;
+	if (!LoadXmlDocument(strSheetPath, spSheetDoc))
+	{
+		DeleteDirectoryTree(strWorkFolder);
+		return FALSE;
+	}
+
+	MSXML2::IXMLDOMNodeListPtr spRowNodes;
+	spSheetDoc->selectNodes(CComBSTR(L"/x:worksheet/x:sheetData/x:row"), &spRowNodes);
+	long nRowNodeCount = 0;
+	if (spRowNodes != NULL)
+	{
+		spRowNodes->get_length(&nRowNodeCount);
+	}
+
+	BOOL bHeaderRead = FALSE;
+	for (long nRow = 0; nRow < nRowNodeCount; ++nRow)
+	{
+		MSXML2::IXMLDOMNodePtr spRowNode;
+		spRowNodes->get_item(nRow, &spRowNode);
+		if (spRowNode == NULL)
+		{
+			continue;
+		}
+
+		std::vector<CString> excelRowValues;
+		BOOL bHasValue = FALSE;
+
+		MSXML2::IXMLDOMNodeListPtr spCellNodes;
+		if (FAILED(spRowNode->selectNodes(CComBSTR(L"x:c"), &spCellNodes)) || spCellNodes == NULL)
+		{
+			continue;
+		}
+
+		long nCellCount = 0;
+		spCellNodes->get_length(&nCellCount);
+		for (long nCell = 0; nCell < nCellCount; ++nCell)
+		{
+			MSXML2::IXMLDOMNodePtr spCellNode;
+			spCellNodes->get_item(nCell, &spCellNode);
+			if (spCellNode == NULL)
+			{
+				continue;
+			}
+
+			CString strRef = GetNodeAttribute(spCellNode, L"r");
+			strRef.MakeUpper();
+			const int nCol = ColumnNameToIndex(strRef);
+			if (nCol < 0)
+			{
+				continue;
+			}
+
+			if (nCol >= static_cast<int>(excelRowValues.size()))
+			{
+				excelRowValues.resize(nCol + 1);
+			}
+
+			CString strType = GetNodeAttribute(spCellNode, L"t");
+			CString strRawValue;
+
+			if (strType.CompareNoCase(_T("inlineStr")) == 0)
+			{
+				MSXML2::IXMLDOMNodePtr spInlineText;
+				spCellNode->selectSingleNode(CComBSTR(L"x:is/x:t"), &spInlineText);
+				strRawValue = GetNodeText(spInlineText);
+			}
+			else
+			{
+				MSXML2::IXMLDOMNodePtr spValueNode;
+				spCellNode->selectSingleNode(CComBSTR(L"x:v"), &spValueNode);
+				strRawValue = GetNodeText(spValueNode);
+
+				if (strType.CompareNoCase(_T("s")) == 0)
+				{
+					unsigned long long nSharedIndex = 0;
+					if (TryParseInteger(strRawValue, nSharedIndex) && nSharedIndex < sharedStrings.size())
+					{
+						strRawValue = sharedStrings[static_cast<size_t>(nSharedIndex)];
+					}
+				}
+			}
+
+			if (!TrimText(strRawValue).IsEmpty())
+			{
+				bHasValue = TRUE;
+			}
+
+			excelRowValues[nCol] = TrimText(strRawValue);
+		}
+
+		if (!bHasValue)
+		{
+			continue;
+		}
+
+		if (!bHeaderRead)
+		{
+			outColumns.swap(excelRowValues);
+			bHeaderRead = TRUE;
+			continue;
+		}
+
+		if (excelRowValues.size() < outColumns.size())
+		{
+			excelRowValues.resize(outColumns.size());
+		}
+		else if (excelRowValues.size() > outColumns.size())
+		{
+			excelRowValues.resize(outColumns.size());
+		}
+
+		for (size_t nCol = 0; nCol < excelRowValues.size(); ++nCol)
+		{
+			excelRowValues[nCol] = FormatGridValue(excelRowValues[nCol], outColumns[nCol]);
+		}
+		outRows.push_back(excelRowValues);
+	}
+
+	DeleteDirectoryTree(strWorkFolder);
+	return bHeaderRead && !outColumns.empty();
+}
+
+BOOL CExcelXlsxHelper::LoadValueSheet(
+	const CString& strFilePath,
+	const std::vector<CString>& currentColumns,
+	std::vector<std::vector<CString>>& outRows)
+{
+	return LoadSheet(strFilePath, currentColumns, outRows, 1);
+}
 BOOL CExcelXlsxHelper::SaveValueSheet(
 	const CString& strFilePath,
 	const std::vector<CString>& columns,

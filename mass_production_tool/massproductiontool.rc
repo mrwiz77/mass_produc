@@ -54,10 +54,10 @@ BEGIN
     "\r\n"
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)\r\n"
     "LANGUAGE 18, 1\r\n"
-    "#include ""res\\massproductiontool.rc2""  // Microsoft Visual C++ ?댁쇅???ㅻⅨ ?꾧뎄?먯꽌 ?몄쭛??由ъ냼?ㅼ엯?덈떎.\r\n"
-    "#include ""l.KOR\\afxres.rc""      // ?쒖? 援ъ꽦 ?붿냼\r\n"
+    "#include ""res\\massproductiontool.rc2""  // Microsoft Visual C++ ??곸뇚????삘뀲 ?袁㏓럡?癒?퐣 ?紐꾩춿???귐딅꺖??쇱뿯??덈뼄.\r\n"
+    "#include ""l.KOR\\afxres.rc""      // ??? ?닌딄쉐 ?遺용꺖\r\n"
     "#if !defined(_AFXDLL)\r\n"
-    "#include ""l.KOR\\afxribbon.rc""   // MFC 由щ낯 諛?而⑦듃濡?留됰? 由ъ냼??\n"
+    "#include ""l.KOR\\afxribbon.rc""   // MFC ?귐됰궚 獄??뚢뫂?껅에?筌띾맧? ?귐딅꺖??\n"
     "#endif\r\n"
     "#endif\r\n"
     "\0"
@@ -101,7 +101,7 @@ BEGIN
     PUSHBUTTON      "취소",IDCANCEL,-681,410,51,16
     CTEXT           "TODO: 여기에 대화 상자 컨트롤을 배치합니다.",IDC_STATIC,10,96,300,8
     GROUPBOX        "Static",IDC_STATIC_PROP_SHEET_FRAME,7,34,1021,283
-    CONTROL         "",IDC_MAIN_RICHEDIT2_SYS_LOG,"RichEdit20W",ES_MULTILINE | ES_AUTOHSCROLL | WS_BORDER | WS_VSCROLL | WS_TABSTOP,13,321,588,111
+    CONTROL         "",IDC_MAIN_RICHEDIT2_SYS_LOG,"RichEdit20W",WS_BORDER | WS_VSCROLL | WS_TABSTOP | 0x84,13,321,588,111
     PUSHBUTTON      "▉ (STOP)",IDC_BTN_STOP,111,11,90,14
     PUSHBUTTON      "❚❚ ▶ (START|PAUSE)",IDC_BTN_START,13,11,90,14
 END
@@ -116,14 +116,15 @@ BEGIN
     PUSHBUTTON      "WRITE RESULT FILE",IDC_BTN_RANGE_VALUE_WRITE_FILE,98,0,90,14
 END
 
-IDD_PROPPAGE_SYSTEM DIALOGEX 0, 0, 715, 270
+IDD_PROPPAGE_SYSTEM DIALOGEX 0, 0, 666, 285
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "속성 페이지"
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
-    CONTROL         "Custom1",IDC_CUSTOM_PROP_SYSTEM_GRID,"MFCGridCtrl",WS_TABSTOP,0,16,700,240
+    CONTROL         "Custom1",IDC_CUSTOM_PROP_SYSTEM_GRID,"MFCGridCtrl",WS_TABSTOP,0,18,360,217
     PUSHBUTTON      "READ CFG FILE",IDC_BTN_SYSTEM_READ_FILE,0,0,90,14
     PUSHBUTTON      "WRITE RESULT FILE",IDC_BTN_SYSTEM_WRITE_FILE,98,0,90,14
+    CONTROL         "Custom3",IDC_CUSTOM_SYS_DUT_CFG,"MFCGridCtrl",WS_TABSTOP,396,17,315,215
 END
 
 IDD_PROPPAGE_VALUE_TEST DIALOGEX 0, 0, 715, 270
@@ -208,8 +209,8 @@ BEGIN
 
     IDD_PROPPAGE_SYSTEM, DIALOG
     BEGIN
-        RIGHTMARGIN, 235
-        BOTTOMMARGIN, 156
+        RIGHTMARGIN, 764
+        BOTTOMMARGIN, 340
     END
 
     IDD_PROPPAGE_VALUE_TEST, DIALOG
