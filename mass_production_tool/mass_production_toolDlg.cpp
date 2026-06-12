@@ -100,8 +100,14 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
-	m_propertySheet.AddPage(&m_rangeTestPage);
+	InitRangeGridColumns(8);
+	InitValueGridColumns(8);
+	m_rangeTestPage.SetColumnNames(m_rangeGridColumns);
+	m_valueTestPage.SetColumnNames(m_VauleColumns);
+
+	
 	m_propertySheet.AddPage(&m_systemPage);
+	m_propertySheet.AddPage(&m_rangeTestPage);
 	m_propertySheet.AddPage(&m_valueTestPage);
 
 	if (!m_propertySheet.Create(this, WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0))
@@ -134,6 +140,63 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 	initLogView();
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
+}
+
+void CmassproductiontoolDlg::InitValueGridColumns(int nDataLength)
+{
+	m_VauleColumns.clear();
+
+	m_VauleColumns.push_back(_T("HDR"));
+	m_VauleColumns.push_back(_T("LENGTH"));
+	m_VauleColumns.push_back(_T("TYPE"));
+	m_VauleColumns.push_back(_T("CATEGORY"));
+	m_VauleColumns.push_back(_T("OPCODE"));
+	if (nDataLength < 0)
+	{
+		nDataLength = 0;
+	}
+
+	for (int nDataIndex = 0; nDataIndex < nDataLength; ++nDataIndex)
+	{
+		CString strColumnName;
+		strColumnName.Format(_T("DATA[%d]"), nDataIndex);
+		m_VauleColumns.push_back(strColumnName);
+	}
+
+	m_VauleColumns.push_back(_T("DELAY ms"));
+	m_VauleColumns.push_back(_T("RETURN"));
+
+	m_VauleColumns.push_back(_T("PASS COUNT"));
+	m_VauleColumns.push_back(_T("FAIL COUNT"));
+	m_VauleColumns.push_back(_T("TOTAL COUNT"));
+	m_VauleColumns.push_back(_T("EXCUTION"));
+}
+void CmassproductiontoolDlg::InitRangeGridColumns(int nDataLength)
+{
+	m_rangeGridColumns.clear();
+	m_rangeGridColumns.push_back(_T("INDEX(hex)"));
+	m_rangeGridColumns.push_back(_T("Description"));
+	m_rangeGridColumns.push_back(_T("MIN  ( int )"));
+	m_rangeGridColumns.push_back(_T("MAX  ( int )"));
+
+	//if (nDataLength < 0)
+	//{
+	//	nDataLength = 0;
+	//}
+	//
+	//for (int nDataIndex = 0; nDataIndex < nDataLength; ++nDataIndex)
+	//{
+	//	CString strColumnName;
+	//	strColumnName.Format(_T("DATA[%d]"), nDataIndex);
+	//	m_rangeGridColumns.push_back(strColumnName);
+	//}
+
+	m_rangeGridColumns.push_back(_T("DELAY ms"));
+	m_rangeGridColumns.push_back(_T("RETURN  ( int )"));
+	m_rangeGridColumns.push_back(_T("PASS COUNT"));
+	m_rangeGridColumns.push_back(_T("FAIL COUNT"));
+	m_rangeGridColumns.push_back(_T("TOTAL COUNT"));
+	m_rangeGridColumns.push_back(_T("EXCUTION"));
 }
 
 void CmassproductiontoolDlg::OnSysCommand(UINT nID, LPARAM lParam)

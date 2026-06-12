@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <vector>
 #include <afxdlgs.h>
 #include "RangeTestPage.h"
 #include "SystemPage.h"
@@ -30,6 +31,10 @@ public:
 	CValueTestPage m_valueTestPage;
 	CLogView m_logCtrl;
 	CFont m_font;
+	std::vector<CString> m_rangeGridColumns;
+	std::vector<CString> m_VauleColumns;
+	void InitRangeGridColumns(int nDataLength);
+	void InitValueGridColumns(int nDataLength);
 	void LayoutPropertySheet();
 	int initLogView();
 // 구현입니다.

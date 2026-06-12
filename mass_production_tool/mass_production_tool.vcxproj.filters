@@ -39,6 +39,9 @@
     <ClInclude Include="CLogView.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="ExcelXlsxHelper.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
     <ClInclude Include="RangeTestPage.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -75,6 +78,9 @@
     <ClInclude Include="stdafx.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="NewCellTypes\GridCellButton.h">
+      <Filter>Grid</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mass_production_tool.cpp">
@@ -87,6 +93,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="CLogView.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ExcelXlsxHelper.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="RangeTestPage.cpp">
@@ -114,6 +123,9 @@
       <Filter>Grid</Filter>
     </ClCompile>
     <ClCompile Include="GridCtrl_src\TitleTip.cpp">
+      <Filter>Grid</Filter>
+    </ClCompile>
+    <ClCompile Include="NewCellTypes\GridCellButton.cpp">
       <Filter>Grid</Filter>
     </ClCompile>
   </ItemGroup>

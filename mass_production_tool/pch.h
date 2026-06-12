@@ -9,5 +9,11 @@
 
 // 여기에 미리 컴파일하려는 헤더 추가
 #include "framework.h"
+#include <algorithm>
+#include <utility>
+#include <atlbase.h>
+#include <comdef.h>
+#include <ShlObj.h>
+#include <Shldisp.h>
 
 #endif //PCH_H
