@@ -39,6 +39,9 @@
     <ClInclude Include="CLogView.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="CStaticColorText.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
     <ClInclude Include="ExcelXlsxHelper.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -95,6 +98,9 @@
     <ClCompile Include="CLogView.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="CStaticColorText.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
     <ClCompile Include="ExcelXlsxHelper.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -141,6 +147,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\mass_production_tool.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\icon1.ico">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>

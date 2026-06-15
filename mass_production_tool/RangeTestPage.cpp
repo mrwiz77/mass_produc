@@ -7,12 +7,39 @@
 
 IMPLEMENT_DYNAMIC(CRangeTestPage, CPropertyPage)
 
+namespace
+{
+	BOOL UpsertGridColor(std::vector<MP_GRID_CELL_COLOR>& colors, int row, int col, COLORREF bkColor, COLORREF textColor)
+	{
+		if (row < 0 || col < 0)
+		{
+			return FALSE;
+		}
+
+		for (size_t i = 0; i < colors.size(); ++i)
+		{
+			if (colors[i].row == row && colors[i].col == col)
+			{
+				colors[i].bkColor = bkColor;
+				colors[i].textColor = textColor;
+				return TRUE;
+			}
+		}
+
+		MP_GRID_CELL_COLOR color = { row, col, bkColor, textColor };
+		colors.push_back(color);
+		return TRUE;
+	}
+
+}
+
 CRangeTestPage::CRangeTestPage()
 	: CPropertyPage(IDD_PROPPAGE_RANGE_TEST)
 	, m_backgroundColor(GetSysColor(COLOR_3DFACE))
+	, m_resourceGridSize(0, 0)
 {
 	m_psp.dwFlags |= PSP_USETITLE;
-	m_psp.pszTitle = _T("Range Test");
+	m_psp.pszTitle = _T("    RANGE TEST   ");
 }
 
 CRangeTestPage::~CRangeTestPage()
@@ -22,6 +49,20 @@ CRangeTestPage::~CRangeTestPage()
 void CRangeTestPage::SetColumnNames(const std::vector<CString>& columnNames)
 {
 	m_columnNames = columnNames;
+}
+
+BOOL CRangeTestPage::SetGridCellColor(int row, int col, COLORREF rgb)
+{
+	const BOOL bResult = UpsertGridColor(m_gridCellColors, row, col, rgb, RGB(0, 0, 0));
+	ApplyGridCellColors();
+	return bResult;
+}
+
+BOOL CRangeTestPage::SetGridCellThemeColor(int row, int col, MP_GRID_CELL_COLOR_THEME theme)
+{
+	const BOOL bResult = UpsertGridColor(m_gridCellColors, row, col, MpGridThemeBkColor(theme), MpGridThemeTextColor(theme));
+	ApplyGridCellColors();
+	return bResult;
 }
 
 void CRangeTestPage::DoDataExchange(CDataExchange* pDX)
@@ -90,7 +131,7 @@ void CRangeTestPage::InitGrid()
 	
 	for (int nCol = 0; nCol < m_ctrlGrid.GetColumnCount(); nCol++)
 	{
-		m_ctrlGrid.SetColumnWidth(nCol, 150);
+		m_ctrlGrid.SetColumnWidth(nCol, 130);
 	}
 	m_ctrlGrid.SetColumnWidth(nButtonCol, 100);
 	//m_ctrlGrid.SetColumnWidth(3, 100);
@@ -104,18 +145,19 @@ void CRangeTestPage::ResizeGridToClient()
 		return;
 	}
 
-	CRect rectClient;
-	GetClientRect(&rectClient);
-
 	CRect rectGrid;
 	m_ctrlGrid.GetWindowRect(&rectGrid);
 	ScreenToClient(&rectGrid);
 
-	rectGrid.right = rectClient.right - 4;
-	rectGrid.bottom = rectClient.bottom - 4;
-	if (rectGrid.Width() > 0 && rectGrid.Height() > 0)
+	if (m_resourceGridSize.cx <= 0 || m_resourceGridSize.cy <= 0)
 	{
-		m_ctrlGrid.MoveWindow(&rectGrid);
+		m_resourceGridSize.cx = rectGrid.Width();
+		m_resourceGridSize.cy = rectGrid.Height();
+	}
+
+	if (m_resourceGridSize.cx > 0 && m_resourceGridSize.cy > 0)
+	{
+		m_ctrlGrid.MoveWindow(MP_GRID_CLIENT_X, MP_GRID_CLIENT_Y, m_resourceGridSize.cx, m_resourceGridSize.cy);
 	}
 }
 
@@ -139,7 +181,7 @@ void CRangeTestPage::RefreshGrid()
 
 	for (int nCol = 0; nCol < m_ctrlGrid.GetColumnCount(); nCol++)
 	{
-		m_ctrlGrid.SetColumnWidth(nCol, 150);
+		m_ctrlGrid.SetColumnWidth(nCol, 130);
 	}
 	m_ctrlGrid.SetColumnWidth(nButtonCol, 100);
 
@@ -184,7 +226,33 @@ void CRangeTestPage::RefreshGrid()
 
 	m_ctrlGrid.SetRedraw(TRUE, TRUE);
 	m_ctrlGrid.ShowScrollBar(SB_BOTH, TRUE);
+	SetGridCellThemeColor(0, 0, MP_GRID_COLOR_DARK_ORANGE);//index
+	//for (int i = 2; i < m_ctrlGrid.GetColumnCount(); ++i) {
+	//
+	//	SetGridCellThemeColor(0, i, MP_GRID_COLOR_BLUE);//min
+	//}
+	
+	ApplyGridCellColors();
 	m_ctrlGrid.Refresh();
+}
+
+void CRangeTestPage::ApplyGridCellColors()
+{
+	if (m_ctrlGrid.GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+
+	for (size_t i = 0; i < m_gridCellColors.size(); ++i)
+	{
+		const MP_GRID_CELL_COLOR& color = m_gridCellColors[i];
+		if (color.row >= 0 && color.row < m_ctrlGrid.GetRowCount() &&
+			color.col >= 0 && color.col < m_ctrlGrid.GetColumnCount())
+		{
+			m_ctrlGrid.SetItemBkColour(color.row, color.col, color.bkColor);
+			m_ctrlGrid.SetItemFgColour(color.row, color.col, color.textColor);
+		}
+	}
 }
 LRESULT CRangeTestPage::OnGridButtonClick(WPARAM wParam, LPARAM lParam)
 {

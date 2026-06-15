@@ -185,6 +185,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CLogView.h" />
+    <ClInclude Include="CStaticColorText.h" />
     <ClInclude Include="ExcelXlsxHelper.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GridCtrl_src\CellRange.h" />
@@ -208,6 +209,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CLogView.cpp" />
+    <ClCompile Include="CStaticColorText.cpp" />
     <ClCompile Include="ExcelXlsxHelper.cpp" />
     <ClCompile Include="GridCtrl_src\GridCell.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -249,6 +251,7 @@
     <None Include="res\massproductiontool.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\icon1.ico" />
     <Image Include="res\mass_production_tool.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -10,6 +10,7 @@
 #include "SystemPage.h"
 #include "ValueTestPage.h"
 #include "CLogView.h"
+#include "CStaticColorText.h"
 
 // CmassproductiontoolDlg 대화 상자
 class CmassproductiontoolDlg : public CDialogEx
@@ -30,13 +31,23 @@ public:
 	CSystemPage m_systemPage;
 	CValueTestPage m_valueTestPage;
 	CLogView m_logCtrl;
+	CStaticColorText m_decHexStatic;
+	CStaticColorText m_decNormalStatic;
+	CStaticColorText m_networkStatic;
+	CStaticColorText m_syslogStatic;
 	CFont m_font;
+	CBrush m_backgroundBrush;
+	COLORREF m_backgroundColor;
 	std::vector<CString> m_rangeGridColumns;
 	std::vector<CString> m_VauleColumns;
 	void InitRangeGridColumns(int nDataLength);
 	void InitValueGridColumns(int nDataLength);
 	void LayoutPropertySheet();
 	int initLogView();
+	CString GetMainInterfaceRadioName(UINT nCheckedId) const;
+	void TraceMainInterfaceRadioState(LPCTSTR pszReason) const;
+	void MakeMainInterfaceControlsTransparent();
+	
 // 구현입니다.
 protected:
 	HICON m_hIcon;
@@ -46,7 +57,10 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedCancel();
+	afx_msg void OnBnClickedMainInterfaceRadio();
 };

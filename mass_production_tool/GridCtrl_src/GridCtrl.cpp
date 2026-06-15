@@ -3326,13 +3326,13 @@ void CGridCtrl::ResetScrollBars()
     si.fMask = SIF_PAGE | SIF_RANGE;
     si.nPage = (m_nHScrollMax>0)? VisibleRect.Width() : 0;
     si.nMin = 0;
-    si.nMax = m_nHScrollMax;
+    si.nMax = m_nHScrollMax + (si.nPage > 0 ? static_cast<int>(si.nPage) - 1 : 0);
     SetScrollInfo(SB_HORZ, &si, TRUE);
 
     si.fMask |= SIF_DISABLENOSCROLL;
     si.nPage = (m_nVScrollMax>0)? VisibleRect.Height() : 0;
     si.nMin = 0;
-    si.nMax = m_nVScrollMax;
+    si.nMax = m_nVScrollMax + (si.nPage > 0 ? static_cast<int>(si.nPage) - 1 : 0);
     SetScrollInfo(SB_VERT, &si, TRUE);
 }
 

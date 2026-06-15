@@ -10,6 +10,7 @@
 #define IDD_PROPPAGE_SYSTEM             107
 #define IDD_PROPPAGE_VALUE_TEST         108
 #define IDR_MAINFRAME                   128
+#define IDI_ICON1                       133
 #define IDC_STATIC_PROP_SHEET_FRAME     1000
 #define IDC_MAIN_RICHEDIT2_SYS_LOG      1002
 #define IDC_CUSTOM_RANGE_GRID           1003
@@ -30,14 +31,25 @@
 #define IDC_CUSTOM2                     1014
 #define IDC_CUSTOM3                     1015
 #define IDC_CUSTOM_SYS_DUT_CFG          1015
+#define IDC_DEC_HEX                     1016
+#define IDC_DEC_HEX2                    1017
+#define IDC_DEC_NORMAL                  1017
+#define IDC_MAIN_RDO_CAN                1018
+#define IDC_MAIN_RDO_UART               1019
+#define IDC_RADIO3                      1020
+#define IDC_MAIN_RDO_ETH                1020
+#define IDC_DEC_NORMAL2                 1021
+#define IDC_DEC_NETWORK                 1021
+#define IDC_DEC_SYS_LOG                 1022
+#define IDC_DEC_NETWORK2                1023
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        133
+#define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1016
+#define _APS_NEXT_CONTROL_VALUE         1019
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

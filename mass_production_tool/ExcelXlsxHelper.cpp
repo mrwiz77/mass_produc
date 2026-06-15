@@ -470,8 +470,8 @@ std::vector<CString> CExcelXlsxHelper::BuildSystemColumns()
 {
 	std::vector<CString> columns;
 	columns.push_back(_T("TYPE"));
-	columns.push_back(_T("EXPECTEDVALUE"));
-	columns.push_back(_T("RETURN_VALUE"));
+	columns.push_back(_T("EXPECTED "));
+	columns.push_back(_T("RETURN "));
 	columns.push_back(_T("PASS"));
 	columns.push_back(_T("FAIL"));
 	return columns;
@@ -573,15 +573,15 @@ BOOL CExcelXlsxHelper::SaveSystemSheet(
 std::vector<CString> CExcelXlsxHelper::BuildRangeColumns()
 {
 	std::vector<CString> columns;
-	columns.push_back(_T("INDEX(hex)"));
+	columns.push_back(_T("INDEX"));
 	columns.push_back(_T("Description"));
-	columns.push_back(_T("MIN  ( int )"));
-	columns.push_back(_T("MAX  ( int )"));
+	columns.push_back(_T("MIN  "));
+	columns.push_back(_T("MAX  "));
 	columns.push_back(_T("DELAY ms"));
-	columns.push_back(_T("RETURN  ( int )"));
-	columns.push_back(_T("PASS COUNT"));
-	columns.push_back(_T("FAIL COUNT"));
-	columns.push_back(_T("TOTAL COUNT"));
+	columns.push_back(_T("RETURN "));
+	columns.push_back(_T("PASS CNT"));
+	columns.push_back(_T("FAIL CNT"));
+	columns.push_back(_T("TOTAL CNT"));
 	columns.push_back(_T("EXCUTION"));
 	return columns;
 }

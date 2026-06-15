@@ -52,6 +52,7 @@ END_MESSAGE_MAP()
 
 CmassproductiontoolDlg::CmassproductiontoolDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MASS_PRODUCTION_TOOL_DIALOG, pParent)
+	, m_backgroundColor(GetSysColor(COLOR_3DFACE))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -65,7 +66,12 @@ BEGIN_MESSAGE_MAP(CmassproductiontoolDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_WM_CTLCOLOR()
+	ON_WM_ERASEBKGND()
 	ON_BN_CLICKED(IDCANCEL, &CmassproductiontoolDlg::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_MAIN_RDO_CAN, &CmassproductiontoolDlg::OnBnClickedMainInterfaceRadio)
+	ON_BN_CLICKED(IDC_MAIN_RDO_UART, &CmassproductiontoolDlg::OnBnClickedMainInterfaceRadio)
+	ON_BN_CLICKED(IDC_MAIN_RDO_ETH, &CmassproductiontoolDlg::OnBnClickedMainInterfaceRadio)
 END_MESSAGE_MAP()
 
 
@@ -74,6 +80,10 @@ END_MESSAGE_MAP()
 BOOL CmassproductiontoolDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+	SetWindowText(_T("UNITRONTECH MASS PRODUCTION TOOL 1.0.0"));
+	m_backgroundColor = GetSysColor(COLOR_3DFACE);
+	m_backgroundBrush.DeleteObject();
+	m_backgroundBrush.CreateSolidBrush(m_backgroundColor);
 
 	// 시스템 메뉴에 "정보..." 메뉴 항목을 추가합니다.
 
@@ -99,6 +109,37 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 	//  프레임워크가 이 작업을 자동으로 수행합니다.
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
+
+#ifdef IDC_DEC_HEX
+	if (m_decHexStatic.SubclassDlgItem(IDC_DEC_HEX, this))
+	{
+		m_decHexStatic.SetDisplayText(_T("HEX VALUE"));
+		m_decHexStatic.SetThemeColor(MP_GRID_COLOR_DARK_ORANGE);
+		m_decHexStatic.SetTextColor(RGB(255, 255, 255));
+	}
+#endif
+	if (m_decNormalStatic.SubclassDlgItem(IDC_DEC_NORMAL, this))
+	{
+		m_decNormalStatic.SetDisplayText(_T("NORMAL(int,string) VALUE"));
+		m_decNormalStatic.SetThemeColor(MP_GRID_COLOR_DARK_GRAY);
+		m_decNormalStatic.SetTextColor(RGB(255, 255, 255));
+	}
+#if 0
+	if (m_networkStatic.SubclassDlgItem(IDC_DEC_NETWORK, this))
+	{
+		m_networkStatic.SetDisplayText(_T("NEXWORK INTERFACE SELECTION"));
+		m_networkStatic.SetThemeColor(MP_GRID_COLOR_DARK_GRAY);
+		m_networkStatic.SetTextColor(RGB(255, 255, 255));
+	}
+	if (m_syslogStatic.SubclassDlgItem(IDC_DEC_SYS_LOG, this))
+	{
+		m_syslogStatic.SetDisplayText(_T("SYSTEM LOG"));
+		m_syslogStatic.SetThemeColor(MP_GRID_COLOR_DARK_GRAY);
+		m_syslogStatic.SetTextColor(RGB(255, 255, 255));
+	}
+#endif
+	
+	
 
 	InitRangeGridColumns(8);
 	InitValueGridColumns(8);
@@ -138,8 +179,61 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 #endif
 	LayoutPropertySheet();
 	initLogView();
+	CheckRadioButton(
+		IDC_MAIN_RDO_CAN,   // 그룹의 첫 번째 라디오 버튼 ID
+		IDC_MAIN_RDO_ETH,   // 그룹의 마지막 라디오 버튼 ID
+		IDC_MAIN_RDO_CAN    // 기본 선택할 라디오 버튼 ID
+	);
+	MakeMainInterfaceControlsTransparent();
+	TraceMainInterfaceRadioState(_T("Default"));
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
+}
+
+CString CmassproductiontoolDlg::GetMainInterfaceRadioName(UINT nCheckedId) const
+{
+	switch (nCheckedId)
+	{
+	case IDC_MAIN_RDO_CAN:
+		return _T("CAN INTERFACE");
+	case IDC_MAIN_RDO_UART:
+		return _T("UART INTERFACE");
+	case IDC_MAIN_RDO_ETH:
+		return _T("ETH INTERFACE");
+	default:
+		return _T("UNKNOWN");
+	}
+}
+
+void CmassproductiontoolDlg::TraceMainInterfaceRadioState(LPCTSTR pszReason) const
+{
+	const int nCheckedId = GetCheckedRadioButton(IDC_MAIN_RDO_CAN, IDC_MAIN_RDO_ETH);
+	const CString strName = GetMainInterfaceRadioName(static_cast<UINT>(nCheckedId));
+
+	TRACE(_T("[MAIN INTERFACE RADIO] %s: checkedId=%d, selected=%s\n"),
+		pszReason,
+		nCheckedId,
+		strName.GetString());
+}
+
+void CmassproductiontoolDlg::MakeMainInterfaceControlsTransparent()
+{
+	for (CWnd* pChild = GetWindow(GW_CHILD); pChild != nullptr; pChild = pChild->GetWindow(GW_HWNDNEXT))
+	{
+		const UINT nControlId = pChild->GetDlgCtrlID();
+		const DWORD dwButtonStyle = pChild->GetStyle() & BS_TYPEMASK;
+		const BOOL bMainInterfaceRadio =
+			nControlId == IDC_MAIN_RDO_CAN ||
+			nControlId == IDC_MAIN_RDO_UART ||
+			nControlId == IDC_MAIN_RDO_ETH;
+		const BOOL bGroupBox = dwButtonStyle == BS_GROUPBOX;
+
+		if (bMainInterfaceRadio || bGroupBox)
+		{
+			pChild->ModifyStyleEx(0, WS_EX_TRANSPARENT, SWP_FRAMECHANGED);
+			pChild->Invalidate();
+		}
+	}
 }
 
 void CmassproductiontoolDlg::InitValueGridColumns(int nDataLength)
@@ -174,10 +268,10 @@ void CmassproductiontoolDlg::InitValueGridColumns(int nDataLength)
 void CmassproductiontoolDlg::InitRangeGridColumns(int nDataLength)
 {
 	m_rangeGridColumns.clear();
-	m_rangeGridColumns.push_back(_T("INDEX(hex)"));
+	m_rangeGridColumns.push_back(_T("INDEX"));
 	m_rangeGridColumns.push_back(_T("Description"));
-	m_rangeGridColumns.push_back(_T("MIN  ( int )"));
-	m_rangeGridColumns.push_back(_T("MAX  ( int )"));
+	m_rangeGridColumns.push_back(_T("MIN"));
+	m_rangeGridColumns.push_back(_T("MAX"));
 
 	//if (nDataLength < 0)
 	//{
@@ -192,10 +286,10 @@ void CmassproductiontoolDlg::InitRangeGridColumns(int nDataLength)
 	//}
 
 	m_rangeGridColumns.push_back(_T("DELAY ms"));
-	m_rangeGridColumns.push_back(_T("RETURN  ( int )"));
-	m_rangeGridColumns.push_back(_T("PASS COUNT"));
-	m_rangeGridColumns.push_back(_T("FAIL COUNT"));
-	m_rangeGridColumns.push_back(_T("TOTAL COUNT"));
+	m_rangeGridColumns.push_back(_T("RETURN"));
+	m_rangeGridColumns.push_back(_T("PASS CNT"));
+	m_rangeGridColumns.push_back(_T("FAIL CNT"));
+	m_rangeGridColumns.push_back(_T("TOTAL CNT"));
 	m_rangeGridColumns.push_back(_T("EXCUTION"));
 }
 
@@ -246,6 +340,38 @@ void CmassproductiontoolDlg::OnPaint()
 HCURSOR CmassproductiontoolDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
+}
+
+HBRUSH CmassproductiontoolDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	if (pWnd != nullptr)
+	{
+		const UINT nControlId = pWnd->GetDlgCtrlID();
+		const DWORD dwButtonStyle = pWnd->GetStyle() & BS_TYPEMASK;
+		const BOOL bMainInterfaceRadio =
+			nControlId == IDC_MAIN_RDO_CAN ||
+			nControlId == IDC_MAIN_RDO_UART ||
+			nControlId == IDC_MAIN_RDO_ETH;
+		const BOOL bGroupBox = dwButtonStyle == BS_GROUPBOX;
+
+		if (bMainInterfaceRadio || bGroupBox)
+		{
+			pDC->SetBkMode(TRANSPARENT);
+			pDC->SetBkColor(m_backgroundColor);
+			pDC->SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
+			return static_cast<HBRUSH>(m_backgroundBrush.GetSafeHandle());
+		}
+	}
+
+	return CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
+BOOL CmassproductiontoolDlg::OnEraseBkgnd(CDC* pDC)
+{
+	CRect rect;
+	GetClientRect(&rect);
+	pDC->FillSolidRect(&rect, m_backgroundColor);
+	return TRUE;
 }
 
 void CmassproductiontoolDlg::LayoutPropertySheet()
@@ -321,4 +447,9 @@ void CmassproductiontoolDlg::OnBnClickedCancel()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	CDialogEx::OnCancel();
+}
+
+void CmassproductiontoolDlg::OnBnClickedMainInterfaceRadio()
+{
+	TraceMainInterfaceRadioState(_T("Clicked"));
 }
