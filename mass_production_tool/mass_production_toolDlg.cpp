@@ -258,6 +258,7 @@ void CmassproductiontoolDlg::InitValueGridColumns(int nDataLength)
 	}
 
 	m_VauleColumns.push_back(_T("DELAY ms"));
+	m_VauleColumns.push_back(_T("EXPECTED"));
 	m_VauleColumns.push_back(_T("RETURN"));
 
 	m_VauleColumns.push_back(_T("PASS COUNT"));

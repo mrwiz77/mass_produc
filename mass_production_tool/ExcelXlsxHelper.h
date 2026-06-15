@@ -37,8 +37,8 @@
 //    - Creates the ValueTestPage grid column list.
 //    - If nDataLength is 8, DATA[0] through DATA[7] are generated.
 //    - Returned column order is:
-//      HDR, LENGTH, TYPE, CATEGORY, OPCODE, DATA[n], DELAY ms, RETURN,
-//      PASS COUNT, FAIL COUNT, TOTAL COUNT, EXCUTION.
+//      HDR, LENGTH, TYPE, CATEGORY, OPCODE, DATA[n], DELAY ms, EXPECTED,
+//      RETURN, PASS COUNT, FAIL COUNT, TOTAL COUNT, EXCUTION.
 //
 // 2. LoadValueSheet(strFilePath, currentColumns, outRows)
 //    - Reads the first worksheet from strFilePath and returns row data mapped

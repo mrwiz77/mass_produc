@@ -246,7 +246,7 @@ void CValueTestPage::RefreshGrid()
 	m_ctrlGrid.SetRedraw(TRUE, TRUE);
 	m_ctrlGrid.ShowScrollBar(SB_BOTH, TRUE);
 
-	for (int i = 2; i < m_ctrlGrid.GetColumnCount()-6; ++i) {
+	for (int i = 2; i < m_ctrlGrid.GetColumnCount()-5; ++i) {
 
 		SetGridCellThemeColor(0, i, MP_GRID_COLOR_DARK_ORANGE);//min
 	}

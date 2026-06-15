@@ -458,6 +458,7 @@ std::vector<CString> CExcelXlsxHelper::BuildValueColumns(int nDataLength)
 		columns.push_back(strColumnName);
 	}
 	columns.push_back(_T("DELAY ms"));
+	columns.push_back(_T("EXPECTED"));
 	columns.push_back(_T("RETURN"));
 	columns.push_back(_T("PASS COUNT"));
 	columns.push_back(_T("FAIL COUNT"));
