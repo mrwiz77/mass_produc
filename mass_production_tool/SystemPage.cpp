@@ -380,6 +380,7 @@ void CSystemPage::ApplyGridCellColors()
 		if (nFailCol >= 0 && nFailCol < m_ctrlGrid.GetColumnCount())
 		{
 			m_ctrlGrid.SetItemFgColour(nRow, nFailCol, failTextColor);
+
 		}
 	}
 }

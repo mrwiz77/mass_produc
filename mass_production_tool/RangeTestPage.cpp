@@ -1009,6 +1009,7 @@ void CRangeTestPage::RunRangeTestRow(int nGridRow, BOOL bUseDelay)
 		m_ctrlGrid.SetItemText(nGridRow, nTotalCol, m_gridRows[nDataRow][nTotalCol]);
 	}
 	ApplyCountColumnTextColors();
+	
 	m_ctrlGrid.Refresh();
 	UpdateOverallTestStatus();
 
@@ -1094,6 +1095,11 @@ void CRangeTestPage::RunIntegratedRangeTestRow(int nGridRow, BOOL bUseDelay)
 		m_ctrlGrid.SetItemText(nGridRow, nTotalCol, MpFormatDecimal(nTotalCount));
 	}
 	ApplyCountColumnTextColors();
+	CString tmp;
+	tmp = _T("0");
+	if (MpFormatDecimal(nFailCount) != tmp) {
+		m_ctrlGrid.SetItemBkColour(nGridRow, nFailCol, MpGridThemeBkColor(MP_GRID_COLOR_PURPLE));
+	}
 	m_ctrlGrid.Refresh();
 	UpdateOverallTestStatus();
 }
@@ -1209,7 +1215,12 @@ void CRangeTestPage::RunIntegratedValueTestRow(int nGridRow, BOOL bUseDelay)
 	{
 		m_ctrlGrid.SetItemText(nGridRow, nTotalCol, MpFormatDecimal(nTotalCount));
 	}
+	CString tmp;
+	tmp = _T("0");
 	ApplyCountColumnTextColors();
+	if (MpFormatDecimal(nFailCount) != tmp) {
+		m_ctrlGrid.SetItemBkColour(nGridRow, nFailCol, MpGridThemeBkColor(MP_GRID_COLOR_PURPLE));
+	}
 	m_ctrlGrid.Refresh();
 	UpdateOverallTestStatus();
 }
@@ -1295,6 +1306,12 @@ void CRangeTestPage::RunIntegratedSystemTestRow(int nGridRow, BOOL bUseDelay)
 	m_ctrlGrid.SetItemText(nGridRow, nFailCol, MpFormatDecimal(nFailCount));
 	m_ctrlGrid.SetItemText(nGridRow, nTotalCol, MpFormatDecimal(nTotalCount));
 	ApplyCountColumnTextColors();
+	CString tmp;
+	tmp = _T("0");
+	ApplyCountColumnTextColors();
+	if (MpFormatDecimal(nFailCount) != tmp) {
+		m_ctrlGrid.SetItemBkColour(nGridRow, nFailCol, MpGridThemeBkColor(MP_GRID_COLOR_PURPLE));
+	}
 	m_ctrlGrid.Refresh();
 	UpdateOverallTestStatus();
 }
