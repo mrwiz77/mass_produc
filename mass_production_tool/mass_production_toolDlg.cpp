@@ -110,7 +110,7 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 	//  프레임워크가 이 작업을 자동으로 수행합니다.
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
-	ModifyStyle(0, WS_MAXIMIZEBOX, SWP_FRAMECHANGED);
+	ModifyStyle(0, WS_MINIMIZEBOX | WS_MAXIMIZEBOX, SWP_FRAMECHANGED);
 
 #ifdef IDC_DEC_HEX
 	if (m_decHexStatic.SubclassDlgItem(IDC_DEC_HEX, this))
