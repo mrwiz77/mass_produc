@@ -66,6 +66,7 @@ BEGIN_MESSAGE_MAP(CmassproductiontoolDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 	ON_BN_CLICKED(IDCANCEL, &CmassproductiontoolDlg::OnBnClickedCancel)
@@ -109,6 +110,7 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 	//  프레임워크가 이 작업을 자동으로 수행합니다.
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
+	ModifyStyle(0, WS_MAXIMIZEBOX, SWP_FRAMECHANGED);
 
 #ifdef IDC_DEC_HEX
 	if (m_decHexStatic.SubclassDlgItem(IDC_DEC_HEX, this))
@@ -186,6 +188,7 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 	);
 	MakeMainInterfaceControlsTransparent();
 	TraceMainInterfaceRadioState(_T("Default"));
+	MpCaptureChildLayout(this, m_initialClientSize, m_childLayouts);
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -343,6 +346,21 @@ HCURSOR CmassproductiontoolDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+void CmassproductiontoolDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+
+	if (cx <= 0 || cy <= 0)
+	{
+		return;
+	}
+
+	MpScaleChildLayout(this, m_initialClientSize, m_childLayouts, cx, cy);
+	LayoutPropertySheet();
+
+	Invalidate(FALSE);
+}
+
 HBRUSH CmassproductiontoolDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	if (pWnd != nullptr)
@@ -393,6 +411,24 @@ void CmassproductiontoolDlg::LayoutPropertySheet()
 	ScreenToClient(&sheetRect);
 	pSheetFrame->ShowWindow(SW_HIDE);
 	m_propertySheet.MoveWindow(sheetRect);
+
+	CTabCtrl* pTab = m_propertySheet.GetTabControl();
+	if (pTab != nullptr && ::IsWindow(pTab->GetSafeHwnd()))
+	{
+		CRect pageRect;
+		m_propertySheet.GetClientRect(&pageRect);
+		pTab->AdjustRect(FALSE, &pageRect);
+		pageRect.DeflateRect(1, 1, 1, 1);
+
+		for (int nPage = 0; nPage < m_propertySheet.GetPageCount(); ++nPage)
+		{
+			CPropertyPage* pPage = m_propertySheet.GetPage(nPage);
+			if (pPage != nullptr && ::IsWindow(pPage->GetSafeHwnd()))
+			{
+				pPage->MoveWindow(pageRect);
+			}
+		}
+	}
 }
 
 int CmassproductiontoolDlg::initLogView()

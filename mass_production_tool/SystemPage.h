@@ -42,6 +42,8 @@ protected:
 	std::vector<std::vector<CString>> m_dutConfigRows;
 	std::vector<MP_GRID_CELL_COLOR> m_gridCellColors;
 	std::vector<MP_GRID_CELL_COLOR> m_dutConfigGridCellColors;
+	CSize m_initialClientSize;
+	std::vector<MP_CHILD_LAYOUT> m_childLayouts;
 
 	void InitGrid();
 	void ResizeGridToClient();
@@ -55,6 +57,7 @@ protected:
 	void LoadDutConfigFromGridRows();
 	void RunSystemTests();
 
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnBnClickedBtnSystemReadFile();

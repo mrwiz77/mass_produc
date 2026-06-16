@@ -91,10 +91,12 @@ BOOL CSystemPage::OnInitDialog()
 	InitGrid();
 	InitDutConfigGrid();
 	SetDlgItemText(IDC_SYS_LOOP, _T("1"));
+	MpCaptureChildLayout(this, m_initialClientSize, m_childLayouts);
 	return TRUE;
 }
 
 BEGIN_MESSAGE_MAP(CSystemPage, CPropertyPage)
+	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 	ON_BN_CLICKED(IDC_BTN_SYSTEM_READ_FILE, &CSystemPage::OnBnClickedBtnSystemReadFile)
@@ -136,19 +138,17 @@ void CSystemPage::ResizeGridToClient()
 		return;
 	}
 
-	CRect rectGrid;
-	m_ctrlGrid.GetWindowRect(&rectGrid);
-	ScreenToClient(&rectGrid);
+	CRect rectClient;
+	GetClientRect(&rectClient);
+	const int gap = 20;
+	const int gridTop = MP_GRID_CLIENT_Y;
+	const int availableWidth = max(20, rectClient.Width() - MP_GRID_CLIENT_X - 1);
+	const int gridWidth = max(10, (availableWidth - gap) / 2);
+	const int gridHeight = max(10, rectClient.Height() - gridTop - 1);
 
-	if (m_resourceGridSize.cx <= 0 || m_resourceGridSize.cy <= 0)
+	if (gridWidth > 0 && gridHeight > 0)
 	{
-		m_resourceGridSize.cx = rectGrid.Width();
-		m_resourceGridSize.cy = rectGrid.Height();
-	}
-
-	if (m_resourceGridSize.cx > 0 && m_resourceGridSize.cy > 0)
-	{
-		m_ctrlGrid.MoveWindow(MP_GRID_CLIENT_X, MP_GRID_CLIENT_Y, m_resourceGridSize.cx, m_resourceGridSize.cy);
+		m_ctrlGrid.MoveWindow(MP_GRID_CLIENT_X, gridTop, gridWidth, gridHeight);
 	}
 }
 
@@ -190,10 +190,17 @@ void CSystemPage::ResizeDutConfigGridToClient()
 		return;
 	}
 
-	CRect rectGrid;
-	m_dutConfigGrid.GetWindowRect(&rectGrid);
-	ScreenToClient(&rectGrid);
-	m_dutConfigGrid.MoveWindow(rectGrid.left, MP_GRID_CLIENT_Y, rectGrid.Width(), rectGrid.Height());
+	CRect rectClient;
+	GetClientRect(&rectClient);
+	const int gap = 20;
+	const int gridTop = MP_GRID_CLIENT_Y;
+	const int availableWidth = max(20, rectClient.Width() - MP_GRID_CLIENT_X - 1);
+	const int leftGridWidth = max(10, (availableWidth - gap) / 2);
+	const int rightGridLeft = MP_GRID_CLIENT_X + leftGridWidth + gap;
+	const int rightGridWidth = max(10, rectClient.Width() - rightGridLeft - 1);
+	const int gridHeight = max(10, rectClient.Height() - gridTop - 1);
+
+	m_dutConfigGrid.MoveWindow(rightGridLeft, gridTop, rightGridWidth, gridHeight);
 #endif
 }
 
@@ -521,6 +528,24 @@ void CSystemPage::RunSystemTests()
 	{
 		m_ctrlGrid.Refresh();
 	}
+}
+
+void CSystemPage::OnSize(UINT nType, int cx, int cy)
+{
+	CPropertyPage::OnSize(nType, cx, cy);
+	MpScaleChildLayout(this, m_initialClientSize, m_childLayouts, cx, cy);
+	ResizeGridToClient();
+	ResizeDutConfigGridToClient();
+	if (m_ctrlGrid.GetSafeHwnd() != NULL)
+	{
+		m_ctrlGrid.Refresh();
+	}
+#ifdef IDC_CUSTOM_SYS_DUT_CFG
+	if (m_dutConfigGrid.GetSafeHwnd() != NULL)
+	{
+		m_dutConfigGrid.Refresh();
+	}
+#endif
 }
 
 void CSystemPage::OnBnClickedBtnSystemReadFile()

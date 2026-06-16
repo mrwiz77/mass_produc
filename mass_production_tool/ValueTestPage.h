@@ -41,6 +41,8 @@ protected:
 	std::vector<CString> m_columnNames;
 	std::vector<std::vector<CString>> m_gridRows;
 	std::vector<MP_GRID_CELL_COLOR> m_gridCellColors;
+	CSize m_initialClientSize;
+	std::vector<MP_CHILD_LAYOUT> m_childLayouts;
 	void InitGrid();
 	void ResizeGridToClient();
 	int GetMaxDataLengthFromEdit();
@@ -53,6 +55,7 @@ protected:
 	void RunValueTestRow(int nGridRow, BOOL bUseDelay);
 	void ResetValueTestResults();
 	afx_msg LRESULT OnGridButtonClick(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);

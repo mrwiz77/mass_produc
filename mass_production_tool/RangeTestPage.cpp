@@ -85,11 +85,13 @@ BOOL CRangeTestPage::OnInitDialog()
 	m_backgroundBrush.CreateSolidBrush(m_backgroundColor);
 	InitGrid();
 	SetDlgItemText(IDC_RNG_LOOP, _T("1"));
+	MpCaptureChildLayout(this, m_initialClientSize, m_childLayouts);
 	return TRUE;
 }
 
 BEGIN_MESSAGE_MAP(CRangeTestPage, CPropertyPage)
 	ON_MESSAGE(WM_GRID_BUTTON_CLICK, &CRangeTestPage::OnGridButtonClick)
+	ON_WM_SIZE()
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 	ON_BN_CLICKED(IDC_BTN_RANGE_VALUE_READ_FILE, &CRangeTestPage::OnBnClickedBtnRangeValueReadFile)
@@ -154,19 +156,14 @@ void CRangeTestPage::ResizeGridToClient()
 		return;
 	}
 
-	CRect rectGrid;
-	m_ctrlGrid.GetWindowRect(&rectGrid);
-	ScreenToClient(&rectGrid);
+	CRect rectClient;
+	GetClientRect(&rectClient);
 
-	if (m_resourceGridSize.cx <= 0 || m_resourceGridSize.cy <= 0)
+	const int gridWidth = max(10, rectClient.Width() - MP_GRID_CLIENT_X - 1);
+	const int gridHeight = max(10, rectClient.Height() - MP_GRID_CLIENT_Y - 1);
+	if (gridWidth > 0 && gridHeight > 0)
 	{
-		m_resourceGridSize.cx = rectGrid.Width();
-		m_resourceGridSize.cy = rectGrid.Height();
-	}
-
-	if (m_resourceGridSize.cx > 0 && m_resourceGridSize.cy > 0)
-	{
-		m_ctrlGrid.MoveWindow(MP_GRID_CLIENT_X, MP_GRID_CLIENT_Y, m_resourceGridSize.cx, m_resourceGridSize.cy);
+		m_ctrlGrid.MoveWindow(MP_GRID_CLIENT_X, MP_GRID_CLIENT_Y, gridWidth, gridHeight);
 	}
 }
 
@@ -492,6 +489,18 @@ LRESULT CRangeTestPage::OnGridButtonClick(WPARAM wParam, LPARAM lParam)
 
 	return 0;
 }
+
+void CRangeTestPage::OnSize(UINT nType, int cx, int cy)
+{
+	CPropertyPage::OnSize(nType, cx, cy);
+	MpScaleChildLayout(this, m_initialClientSize, m_childLayouts, cx, cy);
+	ResizeGridToClient();
+	if (m_ctrlGrid.GetSafeHwnd() != NULL)
+	{
+		m_ctrlGrid.Refresh();
+	}
+}
+
 HBRUSH CRangeTestPage::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC)

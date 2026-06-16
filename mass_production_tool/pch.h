@@ -11,6 +11,7 @@
 #include "framework.h"
 #include <algorithm>
 #include <utility>
+#include <vector>
 #include <atlbase.h>
 #include <comdef.h>
 #include <ShlObj.h>
@@ -30,6 +31,73 @@ void MpTrace(UINT nCategory, UINT nLevel, LPCSTR pszFormat, ...);
 
 #define MP_GRID_CLIENT_X 0
 #define MP_GRID_CLIENT_Y 48
+
+struct MP_CHILD_LAYOUT
+{
+	HWND hWnd;
+	CRect rect;
+};
+
+inline void MpCaptureChildLayout(CWnd* pParent, CSize& initialClientSize, std::vector<MP_CHILD_LAYOUT>& childLayouts)
+{
+	if (pParent == nullptr || !::IsWindow(pParent->GetSafeHwnd()))
+	{
+		return;
+	}
+
+	CRect rectClient;
+	pParent->GetClientRect(&rectClient);
+	initialClientSize = rectClient.Size();
+	childLayouts.clear();
+
+	for (CWnd* pChild = pParent->GetWindow(GW_CHILD); pChild != nullptr; pChild = pChild->GetWindow(GW_HWNDNEXT))
+	{
+		if (!::IsWindow(pChild->GetSafeHwnd()))
+		{
+			continue;
+		}
+
+		CRect rectChild;
+		pChild->GetWindowRect(&rectChild);
+		pParent->ScreenToClient(&rectChild);
+
+		MP_CHILD_LAYOUT layout = { pChild->GetSafeHwnd(), rectChild };
+		childLayouts.push_back(layout);
+	}
+}
+
+inline void MpScaleChildLayout(CWnd* pParent, const CSize& initialClientSize, const std::vector<MP_CHILD_LAYOUT>& childLayouts, int cx, int cy)
+{
+	if (pParent == nullptr || initialClientSize.cx <= 0 || initialClientSize.cy <= 0 || cx <= 0 || cy <= 0)
+	{
+		return;
+	}
+
+	for (size_t i = 0; i < childLayouts.size(); ++i)
+	{
+		const MP_CHILD_LAYOUT& layout = childLayouts[i];
+		if (!::IsWindow(layout.hWnd))
+		{
+			continue;
+		}
+
+		CRect rectNew;
+		rectNew.left = MulDiv(layout.rect.left, cx, initialClientSize.cx);
+		rectNew.top = MulDiv(layout.rect.top, cy, initialClientSize.cy);
+		rectNew.right = MulDiv(layout.rect.right, cx, initialClientSize.cx);
+		rectNew.bottom = MulDiv(layout.rect.bottom, cy, initialClientSize.cy);
+		if (rectNew.Width() < 1)
+		{
+			rectNew.right = rectNew.left + 1;
+		}
+		if (rectNew.Height() < 1)
+		{
+			rectNew.bottom = rectNew.top + 1;
+		}
+
+		::MoveWindow(layout.hWnd, rectNew.left, rectNew.top, rectNew.Width(), rectNew.Height(), TRUE);
+	}
+}
 
 enum MP_GRID_CELL_COLOR_THEME
 {

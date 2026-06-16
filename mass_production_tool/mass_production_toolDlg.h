@@ -40,6 +40,8 @@ public:
 	COLORREF m_backgroundColor;
 	std::vector<CString> m_rangeGridColumns;
 	std::vector<CString> m_VauleColumns;
+	CSize m_initialClientSize;
+	std::vector<MP_CHILD_LAYOUT> m_childLayouts;
 	void InitRangeGridColumns(int nDataLength);
 	void InitValueGridColumns(int nDataLength);
 	void LayoutPropertySheet();
@@ -57,6 +59,7 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	DECLARE_MESSAGE_MAP()

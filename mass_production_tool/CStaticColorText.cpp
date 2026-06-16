@@ -18,6 +18,7 @@ CStaticColorText::~CStaticColorText()
 BEGIN_MESSAGE_MAP(CStaticColorText, CStatic)
 	ON_WM_CTLCOLOR_REFLECT()
 	ON_WM_PAINT()
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 void CStaticColorText::SetDisplayText(const CString& text)
@@ -75,6 +76,16 @@ void CStaticColorText::OnPaint()
 	if (pOldFont != nullptr)
 	{
 		dc.SelectObject(pOldFont);
+	}
+}
+
+void CStaticColorText::OnSize(UINT nType, int cx, int cy)
+{
+	CStatic::OnSize(nType, cx, cy);
+
+	if (GetSafeHwnd() != NULL)
+	{
+		RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
 	}
 }
 
