@@ -16,6 +16,18 @@
 #include <ShlObj.h>
 #include <Shldisp.h>
 
+class CLogView;
+void MpSetTraceLogView(CLogView* pLogView);
+void MpTrace(LPCTSTR pszFormat, ...);
+void MpTrace(LPCSTR pszFormat, ...);
+void MpTrace(UINT nCategory, UINT nLevel, LPCTSTR pszFormat, ...);
+void MpTrace(UINT nCategory, UINT nLevel, LPCSTR pszFormat, ...);
+
+#ifdef TRACE
+#undef TRACE
+#endif
+#define TRACE MpTrace
+
 #define MP_GRID_CLIENT_X 0
 #define MP_GRID_CLIENT_Y 48
 
@@ -27,6 +39,7 @@ enum MP_GRID_CELL_COLOR_THEME
 	MP_GRID_COLOR_DARK_YELLOW,
 	MP_GRID_COLOR_BLUE,
 	MP_GRID_COLOR_DARK_BLUE,
+	MP_GRID_COLOR_DARK_RED,
 	MP_GRID_COLOR_GREEN,
 	MP_GRID_COLOR_DARK_GREEN,
 	MP_GRID_COLOR_ORANGE,
@@ -47,11 +60,12 @@ inline COLORREF MpGridThemeBkColor(MP_GRID_CELL_COLOR_THEME theme)
 {
 	switch (theme)
 	{
-	case MP_GRID_COLOR_DARK_GRAY: return RGB(120, 120, 120);
+	case MP_GRID_COLOR_DARK_GRAY: return RGB(160, 160, 160);
 	case MP_GRID_COLOR_YELLOW: return RGB(255, 217, 102);
 	case MP_GRID_COLOR_DARK_YELLOW: return RGB(191, 143, 0);
 	case MP_GRID_COLOR_BLUE: return RGB(31, 78, 120);
 	case MP_GRID_COLOR_DARK_BLUE: return RGB(0, 32, 96);
+	case MP_GRID_COLOR_DARK_RED: return RGB(156, 0, 6);
 	case MP_GRID_COLOR_GREEN: return RGB(112, 173, 71);
 	case MP_GRID_COLOR_DARK_GREEN: return RGB(0, 97, 0);
 	case MP_GRID_COLOR_ORANGE: return RGB(237, 125, 49);
@@ -71,6 +85,7 @@ inline COLORREF MpGridThemeTextColor(MP_GRID_CELL_COLOR_THEME theme)
 	case MP_GRID_COLOR_DARK_YELLOW:
 	case MP_GRID_COLOR_BLUE:
 	case MP_GRID_COLOR_DARK_BLUE:
+	case MP_GRID_COLOR_DARK_RED:
 	case MP_GRID_COLOR_DARK_GREEN:
 	case MP_GRID_COLOR_ORANGE:
 	case MP_GRID_COLOR_DARK_ORANGE:
@@ -95,6 +110,7 @@ inline LPCTSTR MpGridThemeText(MP_GRID_CELL_COLOR_THEME theme)
 	case MP_GRID_COLOR_DARK_YELLOW: return _T("MP_GRID_COLOR_DARK_YELLOW");
 	case MP_GRID_COLOR_BLUE: return _T("MP_GRID_COLOR_BLUE");
 	case MP_GRID_COLOR_DARK_BLUE: return _T("MP_GRID_COLOR_DARK_BLUE");
+	case MP_GRID_COLOR_DARK_RED: return _T("MP_GRID_COLOR_DARK_RED");
 	case MP_GRID_COLOR_GREEN: return _T("MP_GRID_COLOR_GREEN");
 	case MP_GRID_COLOR_DARK_GREEN: return _T("MP_GRID_COLOR_DARK_GREEN");
 	case MP_GRID_COLOR_ORANGE: return _T("MP_GRID_COLOR_ORANGE");

@@ -3,6 +3,128 @@
 //  유니
 BEGIN_MESSAGE_MAP(CLogView, CRichEditCtrl)
 END_MESSAGE_MAP()
+
+namespace
+{
+    CLogView* g_pTraceLogView = NULL;
+
+    void MpTrimTraceLine(CString& message)
+    {
+        message.TrimRight(_T("\r\n"));
+    }
+
+    LogLevel MpDetectTraceLogLevel(const CString& message)
+    {
+        CString upper(message);
+        upper.MakeUpper();
+
+        if (upper.Find(_T("ERR")) >= 0 || upper.Find(_T("ERROR")) >= 0)
+        {
+            return LogLevel::ERROR_U;
+        }
+        if (upper.Find(_T("WARN")) >= 0 || upper.Find(_T("WARNING")) >= 0)
+        {
+            return LogLevel::WARN_U;
+        }
+        if (upper.Find(_T("NOTI")) >= 0 || upper.Find(_T("NOTICE")) >= 0)
+        {
+            return LogLevel::NOTICE_U;
+        }
+        if (upper.Find(_T("INF")) >= 0 || upper.Find(_T("INFO")) >= 0)
+        {
+            return LogLevel::INFO_U;
+        }
+        return LogLevel::DEBUG_U;
+    }
+
+    void MpAppendTraceToLogView(const CString& message)
+    {
+        if (g_pTraceLogView != NULL && ::IsWindow(g_pTraceLogView->GetSafeHwnd()))
+        {
+            g_pTraceLogView->AppendLog(MpDetectTraceLogLevel(message), message);
+        }
+    }
+}
+
+void MpSetTraceLogView(CLogView* pLogView)
+{
+    g_pTraceLogView = pLogView;
+}
+
+void MpTrace(LPCTSTR pszFormat, ...)
+{
+    if (pszFormat == NULL)
+    {
+        return;
+    }
+
+    va_list args;
+    va_start(args, pszFormat);
+    CString message;
+    message.FormatV(pszFormat, args);
+    va_end(args);
+
+    ::OutputDebugString(message);
+    MpTrimTraceLine(message);
+    MpAppendTraceToLogView(message);
+}
+
+void MpTrace(LPCSTR pszFormat, ...)
+{
+    if (pszFormat == NULL)
+    {
+        return;
+    }
+
+    va_list args;
+    va_start(args, pszFormat);
+    CStringA messageA;
+    messageA.FormatV(pszFormat, args);
+    va_end(args);
+
+    CString message(messageA);
+    ::OutputDebugString(message);
+    MpTrimTraceLine(message);
+    MpAppendTraceToLogView(message);
+}
+
+void MpTrace(UINT /*nCategory*/, UINT /*nLevel*/, LPCTSTR pszFormat, ...)
+{
+    if (pszFormat == NULL)
+    {
+        return;
+    }
+
+    va_list args;
+    va_start(args, pszFormat);
+    CString message;
+    message.FormatV(pszFormat, args);
+    va_end(args);
+
+    ::OutputDebugString(message);
+    MpTrimTraceLine(message);
+    MpAppendTraceToLogView(message);
+}
+
+void MpTrace(UINT /*nCategory*/, UINT /*nLevel*/, LPCSTR pszFormat, ...)
+{
+    if (pszFormat == NULL)
+    {
+        return;
+    }
+
+    va_list args;
+    va_start(args, pszFormat);
+    CStringA messageA;
+    messageA.FormatV(pszFormat, args);
+    va_end(args);
+
+    CString message(messageA);
+    ::OutputDebugString(message);
+    MpTrimTraceLine(message);
+    MpAppendTraceToLogView(message);
+}
+
 void CLogView::AppendLog(LogLevel level, const CString& message)
 {
     // 최대 길이 초과 시 FIFO로 한 줄씩 제거

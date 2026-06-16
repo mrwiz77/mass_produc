@@ -16,7 +16,7 @@
 //    - Creates the fixed RangeTestPage column list.
 //    - Returned column order is:
 //      INDEX(hex), Description, MIN  ( int ), MAX  ( int ), DELAY ms,
-//      RETURN  ( int ), PASS COUNT, FAIL COUNT, TOTAL COUNT, EXCUTION.
+//      RETURN  ( int ), PASS, FAIL, TOTAL, EXCUTION.
 //
 // 2. LoadRangeSheet(strFilePath, outRows)
 //    - Reads the first worksheet and maps data by the fixed Range Test headers.
@@ -29,7 +29,7 @@
 //    - Saves Range Test rows using the fixed Range Test columns.
 //    - EXCUTION/EXECUTION is treated as the grid button column and is excluded
 //      from the workbook.
-//    - Header fill, PASS/FAIL colors, PASS COUNT, and FAIL COUNT colors use the
+//    - Header fill, PASS/FAIL colors, PASS, and FAIL colors use the
 //      same formatting rules as Value Test export.
 //
 // Value Test usage:
@@ -38,7 +38,7 @@
 //    - If nDataLength is 8, DATA[0] through DATA[7] are generated.
 //    - Returned column order is:
 //      HDR, LENGTH, TYPE, CATEGORY, OPCODE, DATA[n], DELAY ms, EXPECTED,
-//      RETURN, PASS COUNT, FAIL COUNT, TOTAL COUNT, EXCUTION.
+//      RETURN, PASS, FAIL, TOTAL, EXCUTION.
 //
 // 2. LoadValueSheet(strFilePath, currentColumns, outRows)
 //    - Reads the first worksheet from strFilePath and returns row data mapped
@@ -59,8 +59,8 @@
 //      exported.
 //    - Header cells are written with a light gray fill.
 //    - PASS text is written in blue and FAIL text is written in red.
-//    - PASS COUNT column text is written in dark blue.
-//    - FAIL COUNT column text is written in dark red.
+//    - PASS column text is written in dark blue.
+//    - FAIL column text is written in dark red.
 //    - Excel column widths are calculated from header/data text lengths so the
 //      header text is less likely to be clipped in one cell.
 //

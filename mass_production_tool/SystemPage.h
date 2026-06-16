@@ -1,9 +1,11 @@
 ﻿#pragma once
 
+#include <memory>
 #include <vector>
 #include <afxdlgs.h>
 #include "resource.h"
 #include "GridCtrl_src/GridCtrl.h"
+#include "TestInterfaces.h"
 
 // CSystemPage dialog
 class CSystemPage : public CPropertyPage
@@ -31,6 +33,9 @@ protected:
 	CGridCtrl m_ctrlGrid;
 	CGridCtrl m_dutConfigGrid;
 	CSize m_resourceGridSize;
+	std::unique_ptr<ISystemTestInterface> m_systemInterface;
+	MP_SYSTEM_TIMEOUT_CONFIG m_timeoutConfig;
+	MP_SYSTEM_CHECK_CONFIG m_checkConfig;
 	std::vector<CString> m_columnNames;
 	std::vector<std::vector<CString>> m_gridRows;
 	std::vector<CString> m_dutConfigColumnNames;
@@ -46,6 +51,9 @@ protected:
 	void ResizeDutConfigGridToClient();
 	void RefreshDutConfigGrid();
 	void ApplyDutConfigGridCellColors();
+	int FindColumnIndex(const std::vector<CString>& columns, LPCTSTR columnName) const;
+	void LoadDutConfigFromGridRows();
+	void RunSystemTests();
 
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);

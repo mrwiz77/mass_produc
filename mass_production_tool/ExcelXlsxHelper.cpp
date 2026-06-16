@@ -22,6 +22,71 @@ namespace
 		return strResult;
 	}
 
+	CString NormalizeHeaderText(const CString& strText)
+	{
+		CString strResult = TrimText(strText);
+		strResult.MakeUpper();
+		strResult.Remove(_T(' '));
+		strResult.Remove(_T('\t'));
+		strResult.Remove(_T('_'));
+		return strResult;
+	}
+
+	BOOL IsSameHeaderName(const CString& strExcelHeader, const CString& strGridHeader)
+	{
+		const CString excelHeader = NormalizeHeaderText(strExcelHeader);
+		const CString gridHeader = NormalizeHeaderText(strGridHeader);
+		if (excelHeader == gridHeader)
+		{
+			return TRUE;
+		}
+
+		if (gridHeader == _T("INDEX") &&
+			(excelHeader == _T("INDEX(HEX)") || excelHeader == _T("INDEXHEX")))
+		{
+			return TRUE;
+		}
+
+		if (gridHeader == _T("RETURN") &&
+			(excelHeader == _T("RETURNVALUE") || excelHeader == _T("RETURNVAL")))
+		{
+			return TRUE;
+		}
+
+		if (gridHeader == _T("EXPECTED") &&
+			(excelHeader == _T("EXPECTEDVALUE") || excelHeader == _T("EXPECTEDVAL")))
+		{
+			return TRUE;
+		}
+
+		if (gridHeader == _T("EXPECTEDVALUE") && excelHeader == _T("EXPECTED"))
+		{
+			return TRUE;
+		}
+
+		if (gridHeader == _T("RETURNVALUE") && excelHeader == _T("RETURN"))
+		{
+			return TRUE;
+		}
+
+		if (gridHeader == _T("PASSCOUNT") && excelHeader == _T("PASS"))
+		{
+			return TRUE;
+		}
+
+		if (gridHeader == _T("FAILCOUNT") && excelHeader == _T("FAIL"))
+		{
+			return TRUE;
+		}
+
+		if (gridHeader == _T("EXCUTION") && excelHeader == _T("EXECUTION"))
+		{
+			return TRUE;
+		}
+
+		return FALSE;
+	}
+
 	BOOL IsCountColumn(const CString& strColumnName)
 	{
 		CString strUpper(strColumnName);
@@ -54,14 +119,14 @@ namespace
 	{
 		CString strUpper(strColumnName);
 		strUpper.MakeUpper();
-		return strUpper == _T("PASS COUNT");
+		return strUpper == _T("PASS");
 	}
 
 	BOOL IsFailCountColumn(const CString& strColumnName)
 	{
 		CString strUpper(strColumnName);
 		strUpper.MakeUpper();
-		return strUpper == _T("FAIL COUNT");
+		return strUpper == _T("FAIL");
 	}
 
 	BOOL TryParseInteger(const CString& strText, unsigned long long& value)
@@ -460,9 +525,9 @@ std::vector<CString> CExcelXlsxHelper::BuildValueColumns(int nDataLength)
 	columns.push_back(_T("DELAY ms"));
 	columns.push_back(_T("EXPECTED"));
 	columns.push_back(_T("RETURN"));
-	columns.push_back(_T("PASS COUNT"));
-	columns.push_back(_T("FAIL COUNT"));
-	columns.push_back(_T("TOTAL COUNT"));
+	columns.push_back(_T("PASS"));
+	columns.push_back(_T("FAIL"));
+	columns.push_back(_T("TOTAL"));
 	columns.push_back(_T("EXCUTION"));
 	return columns;
 }
@@ -471,8 +536,8 @@ std::vector<CString> CExcelXlsxHelper::BuildSystemColumns()
 {
 	std::vector<CString> columns;
 	columns.push_back(_T("TYPE"));
-	columns.push_back(_T("EXPECTED "));
-	columns.push_back(_T("RETURN "));
+	columns.push_back(_T("EXPECTEDVALUE"));
+	columns.push_back(_T("RETURN_VALUE"));
 	columns.push_back(_T("PASS"));
 	columns.push_back(_T("FAIL"));
 	return columns;
@@ -580,9 +645,9 @@ std::vector<CString> CExcelXlsxHelper::BuildRangeColumns()
 	columns.push_back(_T("MAX  "));
 	columns.push_back(_T("DELAY ms"));
 	columns.push_back(_T("RETURN "));
-	columns.push_back(_T("PASS CNT"));
-	columns.push_back(_T("FAIL CNT"));
-	columns.push_back(_T("TOTAL CNT"));
+	columns.push_back(_T("PASS"));
+	columns.push_back(_T("FAIL"));
+	columns.push_back(_T("TOTAL"));
 	columns.push_back(_T("EXCUTION"));
 	return columns;
 }
@@ -863,20 +928,22 @@ BOOL CExcelXlsxHelper::LoadSheet(
 		if (!bHeaderMapped)
 		{
 			excelToGridColumns.assign(excelRowValues.size(), -1);
+			int nMatchedHeaderCount = 0;
 			for (size_t nExcelCol = 0; nExcelCol < excelRowValues.size(); ++nExcelCol)
 			{
 				CString strExcelHeader = TrimText(excelRowValues[nExcelCol]);
 				for (int nGridCol = 0; nGridCol < nColumnCount; ++nGridCol)
 				{
-					if (strExcelHeader.CompareNoCase(currentColumns[nGridCol]) == 0)
+					if (IsSameHeaderName(strExcelHeader, currentColumns[nGridCol]))
 					{
 						excelToGridColumns[nExcelCol] = nGridCol;
+						++nMatchedHeaderCount;
 						break;
 					}
 				}
 			}
 
-			if (!excelToGridColumns.empty() && excelToGridColumns[0] == 0)
+			if (nMatchedHeaderCount >= 2)
 			{
 				bHeaderMapped = TRUE;
 				continue;

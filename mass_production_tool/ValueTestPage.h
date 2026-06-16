@@ -1,10 +1,12 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <afxdlgs.h>
 #include "resource.h"
 #include "GridCtrl_src/GridCtrl.h"
 #include "NewCellTypes/GridCellButton.h"
+#include "TestInterfaces.h"
 
 // CValueTestPage dialog
 class CValueTestPage : public CPropertyPage
@@ -30,6 +32,12 @@ protected:
 	COLORREF m_backgroundColor;
 	CGridCtrl m_ctrlGrid;
 	CSize m_resourceGridSize;
+	std::unique_ptr<IValueTestInterface> m_valueInterface;
+	BOOL m_bRunAllRunning;
+	BOOL m_bRunAllStopRequested;
+	BOOL m_bRunAllResetRequested;
+	int m_nRunAllResumeLoop;
+	int m_nRunAllResumeRow;
 	std::vector<CString> m_columnNames;
 	std::vector<std::vector<CString>> m_gridRows;
 	std::vector<MP_GRID_CELL_COLOR> m_gridCellColors;
@@ -38,6 +46,12 @@ protected:
 	int GetMaxDataLengthFromEdit();
 	void RefreshGrid();
 	void ApplyGridCellColors();
+	void ApplyCountColumnTextColors();
+	int FindColumnIndex(LPCTSTR columnName) const;
+	DWORD GetValueTestDelayMs(int nGridRow) const;
+	BOOL DelayWithMessagePump(DWORD delayMs);
+	void RunValueTestRow(int nGridRow, BOOL bUseDelay);
+	void ResetValueTestResults();
 	afx_msg LRESULT OnGridButtonClick(WPARAM wParam, LPARAM lParam);
 
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
@@ -45,6 +59,8 @@ protected:
 	afx_msg void OnBnClickedBtnProValueReadFile();
 	afx_msg void OnBnClickedBtnProValueWriteFile();
 	afx_msg void OnBnClickedBtnPropValueApply();
+	afx_msg void OnBnClickedValueBtRunAll();
+	afx_msg void OnBnClickedValueBtReset();
 
 	DECLARE_MESSAGE_MAP()
 };

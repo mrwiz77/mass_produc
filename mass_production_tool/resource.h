@@ -17,8 +17,11 @@
 #define IDC_BUTTON1                     1004
 #define IDC_BTN_STOP                    1004
 #define IDC_BTN_PRO_VALUE_READ_FILE     1004
+#define IDC_RNG_BT_RUN_ALL              1004
 #define IDC_BTN_START                   1005
 #define IDC_BTN_PRO_VALUE_WRITE_FILE    1005
+#define IDC_RNG_BT_RUN_ALL2             1005
+#define IDC_RNG_BT_RESET                1005
 #define IDC_CUSTOM_VALUE_GRID           1006
 #define IDC_BTN_RANGE_VALUE_READ_FILE   1007
 #define IDC_ET_PROP_MAX_DATA_LEN        1008
@@ -44,7 +47,9 @@
 #define IDC_SYS_LOOP                    1020
 #define IDC_DEC_NORMAL2                 1021
 #define IDC_DEC_NETWORK                 1021
+#define IDC_VALUE_BT_RUN_ALL            1021
 #define IDC_DEC_SYS_LOG                 1022
+#define IDC_VALUE_BT_RESET              1022
 #define IDC_DEC_NETWORK2                1023
 
 // Next default values for new objects
@@ -53,7 +58,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1021
+#define _APS_NEXT_CONTROL_VALUE         1022
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -1,10 +1,12 @@
 ﻿#pragma once
 
+#include <memory>
 #include <vector>
 #include <afxdlgs.h>
 #include "resource.h"
 #include "GridCtrl_src/GridCtrl.h"
 #include "NewCellTypes/GridCellButton.h"
+#include "TestInterfaces.h"
 // CRangeTestPage dialog
 class CRangeTestPage : public CPropertyPage
 {
@@ -29,6 +31,12 @@ protected:
 	COLORREF m_backgroundColor;
 	CGridCtrl m_ctrlGrid;
 	CSize m_resourceGridSize;
+	std::unique_ptr<IRangeTestInterface> m_rangeInterface;
+	BOOL m_bRunAllRunning;
+	BOOL m_bRunAllStopRequested;
+	BOOL m_bRunAllResetRequested;
+	int m_nRunAllResumeLoop;
+	int m_nRunAllResumeRow;
 	std::vector<CString> m_columnNames;
 	std::vector<std::vector<CString>> m_gridRows;
 	std::vector<MP_GRID_CELL_COLOR> m_gridCellColors;
@@ -36,6 +44,12 @@ protected:
 	void ResizeGridToClient();
 	void RefreshGrid();
 	void ApplyGridCellColors();
+	void ApplyCountColumnTextColors();
+	int FindColumnIndex(LPCTSTR columnName) const;
+	DWORD GetRangeTestDelayMs(int nGridRow) const;
+	BOOL DelayWithMessagePump(DWORD delayMs);
+	void RunRangeTestRow(int nGridRow, BOOL bUseDelay);
+	void ResetRangeTestResults();
 	afx_msg LRESULT OnGridButtonClick(WPARAM wParam, LPARAM lParam);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -44,4 +58,6 @@ protected:
 public:
 	afx_msg void OnBnClickedBtnRangeValueReadFile();
 	afx_msg void OnBnClickedBtnRangeValueWriteFile();
+	afx_msg void OnBnClickedRngBtRunAll();
+	afx_msg void OnBnClickedRngBtReset();
 };

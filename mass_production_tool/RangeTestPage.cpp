@@ -37,6 +37,12 @@ CRangeTestPage::CRangeTestPage()
 	: CPropertyPage(IDD_PROPPAGE_RANGE_TEST)
 	, m_backgroundColor(GetSysColor(COLOR_3DFACE))
 	, m_resourceGridSize(0, 0)
+	, m_rangeInterface(new CRangeTestSimulInterface())
+	, m_bRunAllRunning(FALSE)
+	, m_bRunAllStopRequested(FALSE)
+	, m_bRunAllResetRequested(FALSE)
+	, m_nRunAllResumeLoop(0)
+	, m_nRunAllResumeRow(0)
 {
 	m_psp.dwFlags |= PSP_USETITLE;
 	m_psp.pszTitle = _T("    RANGE TEST   ");
@@ -78,6 +84,7 @@ BOOL CRangeTestPage::OnInitDialog()
 	m_backgroundBrush.DeleteObject();
 	m_backgroundBrush.CreateSolidBrush(m_backgroundColor);
 	InitGrid();
+	SetDlgItemText(IDC_RNG_LOOP, _T("1"));
 	return TRUE;
 }
 
@@ -87,6 +94,8 @@ BEGIN_MESSAGE_MAP(CRangeTestPage, CPropertyPage)
 	ON_WM_ERASEBKGND()
 	ON_BN_CLICKED(IDC_BTN_RANGE_VALUE_READ_FILE, &CRangeTestPage::OnBnClickedBtnRangeValueReadFile)
 	ON_BN_CLICKED(IDC_BTN_RANGE_VALUE_WRITE_FILE, &CRangeTestPage::OnBnClickedBtnRangeValueWriteFile)
+	ON_BN_CLICKED(IDC_RNG_BT_RUN_ALL, &CRangeTestPage::OnBnClickedRngBtRunAll)
+	ON_BN_CLICKED(IDC_RNG_BT_RESET, &CRangeTestPage::OnBnClickedRngBtReset)
 END_MESSAGE_MAP()
 
 void CRangeTestPage::InitGrid()
@@ -126,7 +135,7 @@ void CRangeTestPage::InitGrid()
 	m_ctrlGrid.SetColumnCount(nColumnCount);
 	m_ctrlGrid.SetRowCount(20);
 	m_ctrlGrid.SetFixedRowCount(1);
-	m_ctrlGrid.SetFixedBkColor(RGB(120, 120, 120));
+	m_ctrlGrid.SetFixedBkColor(RGB(181, 181, 181));
 	m_ctrlGrid.SetFixedTextColor(RGB(255, 255, 255));
 	
 	for (int nCol = 0; nCol < m_ctrlGrid.GetColumnCount(); nCol++)
@@ -233,6 +242,7 @@ void CRangeTestPage::RefreshGrid()
 	//}
 	
 	ApplyGridCellColors();
+	ApplyCountColumnTextColors();
 	m_ctrlGrid.Refresh();
 }
 
@@ -254,6 +264,222 @@ void CRangeTestPage::ApplyGridCellColors()
 		}
 	}
 }
+
+void CRangeTestPage::ApplyCountColumnTextColors()
+{
+	if (m_ctrlGrid.GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+
+	const int nPassCol = FindColumnIndex(_T("PASS"));
+	const int nFailCol = FindColumnIndex(_T("FAIL"));
+	const COLORREF passTextColor = MpGridThemeBkColor(MP_GRID_COLOR_DARK_BLUE);
+	const COLORREF failTextColor = MpGridThemeBkColor(MP_GRID_COLOR_DARK_RED);
+
+	for (int nRow = 0; nRow < m_ctrlGrid.GetRowCount(); ++nRow)
+	{
+		if (nPassCol >= 0 && nPassCol < m_ctrlGrid.GetColumnCount())
+		{
+			m_ctrlGrid.SetItemFgColour(nRow, nPassCol, passTextColor);
+		}
+
+		if (nFailCol >= 0 && nFailCol < m_ctrlGrid.GetColumnCount())
+		{
+			m_ctrlGrid.SetItemFgColour(nRow, nFailCol, failTextColor);
+		}
+	}
+}
+
+int CRangeTestPage::FindColumnIndex(LPCTSTR columnName) const
+{
+	CString target(columnName);
+	target.Trim();
+	for (size_t i = 0; i < m_columnNames.size(); ++i)
+	{
+		CString current(m_columnNames[i]);
+		current.Trim();
+		if (current.CompareNoCase(target) == 0)
+		{
+			return static_cast<int>(i);
+		}
+	}
+	return -1;
+}
+
+DWORD CRangeTestPage::GetRangeTestDelayMs(int nGridRow) const
+{
+	const int nDelayCol = FindColumnIndex(_T("DELAY ms"));
+	if (nGridRow <= 0 || nDelayCol < 0 || m_ctrlGrid.GetSafeHwnd() == NULL)
+	{
+		return 0;
+	}
+
+	DWORD delayMs = 0;
+	MpTryParseUInt32(m_ctrlGrid.GetItemText(nGridRow, nDelayCol), delayMs);
+	return delayMs;
+}
+
+BOOL CRangeTestPage::DelayWithMessagePump(DWORD delayMs)
+{
+	const DWORD startTick = GetTickCount();
+	while (GetTickCount() - startTick < delayMs)
+	{
+		if (m_bRunAllStopRequested)
+		{
+			return FALSE;
+		}
+
+		MSG msg;
+		while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
+			if (m_bRunAllStopRequested)
+			{
+				return FALSE;
+			}
+		}
+
+		const DWORD elapsed = GetTickCount() - startTick;
+		const DWORD remain = delayMs > elapsed ? delayMs - elapsed : 0;
+		Sleep(remain < 10 ? remain : 10);
+	}
+	return !m_bRunAllStopRequested;
+}
+
+void CRangeTestPage::RunRangeTestRow(int nGridRow, BOOL bUseDelay)
+{
+	if (nGridRow <= 0 || m_rangeInterface.get() == NULL)
+	{
+		return;
+	}
+
+	const int nDataRow = nGridRow - 1;
+	if (nDataRow < 0 || nDataRow >= static_cast<int>(m_gridRows.size()))
+	{
+		return;
+	}
+
+	const int nIndexCol = FindColumnIndex(_T("INDEX"));
+	const int nMinCol = FindColumnIndex(_T("MIN"));
+	const int nMaxCol = FindColumnIndex(_T("MAX"));
+	const int nReturnCol = FindColumnIndex(_T("RETURN"));
+	const int nPassCol = FindColumnIndex(_T("PASS"));
+	const int nFailCol = FindColumnIndex(_T("FAIL"));
+	const int nTotalCol = FindColumnIndex(_T("TOTAL"));
+
+	if (nIndexCol < 0 || nMinCol < 0 || nMaxCol < 0 || nReturnCol < 0 || nPassCol < 0 || nFailCol < 0)
+	{
+		TRACE(_T("[RANGE] Required column is missing.\n"));
+		return;
+	}
+
+	if (m_gridRows[nDataRow].size() < m_columnNames.size())
+	{
+		m_gridRows[nDataRow].resize(m_columnNames.size());
+	}
+
+	WORD indexValue = 0;
+	DWORD minValue = 0;
+	DWORD maxValue = 0;
+	if (!MpTryParseUInt16(m_ctrlGrid.GetItemText(nGridRow, nIndexCol), indexValue) ||
+		!MpTryParseUInt32(m_ctrlGrid.GetItemText(nGridRow, nMinCol), minValue) ||
+		!MpTryParseUInt32(m_ctrlGrid.GetItemText(nGridRow, nMaxCol), maxValue))
+	{
+		TRACE(_T("[RANGE] Invalid INDEX/MIN/MAX value. row=%d\n"), nGridRow);
+		return;
+	}
+
+	DWORD returnValue = 0;
+	if (!m_rangeInterface->WriteRangeIndex(indexValue))
+	{
+		TRACE(_T("[RANGE] Interface command failed. row=%d\n"), nGridRow);
+		return;
+	}
+
+	if (bUseDelay)
+	{
+		const DWORD delayMs = GetRangeTestDelayMs(nGridRow);
+		TRACE(_T("[RANGE] row=%d delay=%lu ms\n"), nGridRow, delayMs);
+		if (!DelayWithMessagePump(delayMs))
+		{
+			TRACE(_T("[RANGE] stop requested before read. row=%d\n"), nGridRow);
+			return;
+		}
+	}
+
+	if (!m_rangeInterface->ReadRangeValue(minValue, maxValue, returnValue))
+	{
+		TRACE(_T("[RANGE] Interface read failed. row=%d\n"), nGridRow);
+		return;
+	}
+
+	const BOOL bPass = (minValue <= returnValue && returnValue <= maxValue);
+	const int nPassCount = MpReadCountText(m_ctrlGrid.GetItemText(nGridRow, nPassCol)) + (bPass ? 1 : 0);
+	const int nFailCount = MpReadCountText(m_ctrlGrid.GetItemText(nGridRow, nFailCol)) + (bPass ? 0 : 1);
+	const int nTotalCount = nPassCount + nFailCount;
+
+	m_gridRows[nDataRow][nReturnCol] = MpFormatDecimal(static_cast<int>(returnValue));
+	m_gridRows[nDataRow][nPassCol] = MpFormatDecimal(nPassCount);
+	m_gridRows[nDataRow][nFailCol] = MpFormatDecimal(nFailCount);
+	if (nTotalCol >= 0)
+	{
+		m_gridRows[nDataRow][nTotalCol] = MpFormatDecimal(nTotalCount);
+	}
+
+	m_ctrlGrid.SetItemText(nGridRow, nReturnCol, m_gridRows[nDataRow][nReturnCol]);
+	m_ctrlGrid.SetItemText(nGridRow, nPassCol, m_gridRows[nDataRow][nPassCol]);
+	m_ctrlGrid.SetItemText(nGridRow, nFailCol, m_gridRows[nDataRow][nFailCol]);
+	if (nTotalCol >= 0)
+	{
+		m_ctrlGrid.SetItemText(nGridRow, nTotalCol, m_gridRows[nDataRow][nTotalCol]);
+	}
+	ApplyCountColumnTextColors();
+	m_ctrlGrid.Refresh();
+
+	TRACE(_T("[RANGE] row=%d return=0x%08X result=%s pass=%d fail=%d\n"),
+		nGridRow, returnValue, bPass ? _T("PASS") : _T("FAIL"), nPassCount, nFailCount);
+}
+
+void CRangeTestPage::ResetRangeTestResults()
+{
+	const int nReturnCol = FindColumnIndex(_T("RETURN"));
+	const int nPassCol = FindColumnIndex(_T("PASS"));
+	const int nFailCol = FindColumnIndex(_T("FAIL"));
+	const int nTotalCol = FindColumnIndex(_T("TOTAL"));
+
+	for (size_t nDataRow = 0; nDataRow < m_gridRows.size(); ++nDataRow)
+	{
+		if (m_gridRows[nDataRow].size() < m_columnNames.size())
+		{
+			m_gridRows[nDataRow].resize(m_columnNames.size());
+		}
+
+		if (nReturnCol >= 0)
+		{
+			m_gridRows[nDataRow][nReturnCol].Empty();
+		}
+		if (nPassCol >= 0)
+		{
+			m_gridRows[nDataRow][nPassCol].Empty();
+		}
+		if (nFailCol >= 0)
+		{
+			m_gridRows[nDataRow][nFailCol].Empty();
+		}
+		if (nTotalCol >= 0)
+		{
+			m_gridRows[nDataRow][nTotalCol].Empty();
+		}
+	}
+
+	if (m_ctrlGrid.GetSafeHwnd() != NULL)
+	{
+		RefreshGrid();
+	}
+}
+
 LRESULT CRangeTestPage::OnGridButtonClick(WPARAM wParam, LPARAM lParam)
 {
 	const int nRow = static_cast<int>(wParam);
@@ -262,7 +488,7 @@ LRESULT CRangeTestPage::OnGridButtonClick(WPARAM wParam, LPARAM lParam)
 	CString strMessage;
 	strMessage.Format(_T("Grid button clicked. row=%d, col=%d"), nRow, nCol);
 	TRACE(_T("%s\n"), strMessage.GetString());
-	//AfxMessageBox(strMessage);
+	RunRangeTestRow(nRow, FALSE);
 
 	return 0;
 }
@@ -353,4 +579,109 @@ void CRangeTestPage::OnBnClickedBtnRangeValueWriteFile()
 	{
 		AfxMessageBox(_T("Failed to save the Range Test Excel file."));
 	}
+}
+
+void CRangeTestPage::OnBnClickedRngBtRunAll()
+{
+	if (m_bRunAllRunning)
+	{
+		m_bRunAllStopRequested = TRUE;
+		TRACE(_T("[RANGE] RUN ALL stop requested.\n"));
+		return;
+	}
+
+	CString strLoopCount;
+	GetDlgItemText(IDC_RNG_LOOP, strLoopCount);
+	strLoopCount.Trim();
+
+	const int nLoopCount = _ttoi(strLoopCount);
+	if (nLoopCount <= 0)
+	{
+		TRACE(_T("[RANGE] RUN ALL skipped. invalid loop count=%s\n"), strLoopCount.GetString());
+		return;
+	}
+
+	const int nDataRowCount = static_cast<int>(m_gridRows.size());
+	if (nDataRowCount <= 0)
+	{
+		TRACE(_T("[RANGE] RUN ALL skipped. no range test row.\n"));
+		return;
+	}
+
+	if (m_nRunAllResumeLoop >= nLoopCount || m_nRunAllResumeRow >= nDataRowCount)
+	{
+		m_nRunAllResumeLoop = 0;
+		m_nRunAllResumeRow = 0;
+	}
+
+	m_bRunAllRunning = TRUE;
+	m_bRunAllStopRequested = FALSE;
+	m_bRunAllResetRequested = FALSE;
+
+	TRACE(_T("[RANGE] RUN ALL start. loop=%d, rows=%d, resumeLoop=%d, resumeRow=%d\n"),
+		nLoopCount, nDataRowCount, m_nRunAllResumeLoop, m_nRunAllResumeRow);
+	for (int nLoop = m_nRunAllResumeLoop; nLoop < nLoopCount; ++nLoop)
+	{
+		if (m_bRunAllStopRequested)
+		{
+			break;
+		}
+
+		const int nStartRow = (nLoop == m_nRunAllResumeLoop) ? m_nRunAllResumeRow : 0;
+		for (int nDataRow = nStartRow; nDataRow < nDataRowCount; ++nDataRow)
+		{
+			if (m_bRunAllStopRequested)
+			{
+				break;
+			}
+
+			m_nRunAllResumeLoop = nLoop;
+			m_nRunAllResumeRow = nDataRow;
+
+			const int nGridRow = nDataRow + 1;
+			RunRangeTestRow(nGridRow, TRUE);
+
+			if (m_bRunAllStopRequested)
+			{
+				break;
+			}
+
+			if (nDataRow + 1 < nDataRowCount)
+			{
+				m_nRunAllResumeLoop = nLoop;
+				m_nRunAllResumeRow = nDataRow + 1;
+			}
+			else
+			{
+				m_nRunAllResumeLoop = nLoop + 1;
+				m_nRunAllResumeRow = 0;
+			}
+		}
+	}
+
+	const BOOL bStopped = m_bRunAllStopRequested;
+	const BOOL bReset = m_bRunAllResetRequested;
+	TRACE(_T("[RANGE] RUN ALL %s. loop=%d, rows=%d\n"),
+		bReset ? _T("reset") : (bStopped ? _T("stopped") : _T("done")), nLoopCount, nDataRowCount);
+
+	if (bReset || !bStopped)
+	{
+		m_nRunAllResumeLoop = 0;
+		m_nRunAllResumeRow = 0;
+	}
+
+	m_bRunAllRunning = FALSE;
+	m_bRunAllStopRequested = FALSE;
+	m_bRunAllResetRequested = FALSE;
+}
+
+void CRangeTestPage::OnBnClickedRngBtReset()
+{
+	m_bRunAllStopRequested = TRUE;
+	m_bRunAllResetRequested = TRUE;
+	m_nRunAllResumeLoop = 0;
+	m_nRunAllResumeRow = 0;
+
+	ResetRangeTestResults();
+	TRACE(_T("[RANGE] RESET. stop requested and all test counts cleared.\n"));
 }

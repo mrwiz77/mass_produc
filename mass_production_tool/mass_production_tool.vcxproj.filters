@@ -54,6 +54,9 @@
     <ClInclude Include="ValueTestPage.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="TestInterfaces.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
     <ClInclude Include="GridCtrl_src\CellRange.h">
       <Filter>Grid</Filter>
     </ClInclude>
@@ -111,6 +114,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="ValueTestPage.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="TestInterfaces.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="GridCtrl_src\GridCell.cpp">

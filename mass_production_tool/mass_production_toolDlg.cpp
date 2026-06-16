@@ -261,9 +261,9 @@ void CmassproductiontoolDlg::InitValueGridColumns(int nDataLength)
 	m_VauleColumns.push_back(_T("EXPECTED"));
 	m_VauleColumns.push_back(_T("RETURN"));
 
-	m_VauleColumns.push_back(_T("PASS COUNT"));
-	m_VauleColumns.push_back(_T("FAIL COUNT"));
-	m_VauleColumns.push_back(_T("TOTAL COUNT"));
+	m_VauleColumns.push_back(_T("PASS"));
+	m_VauleColumns.push_back(_T("FAIL"));
+	m_VauleColumns.push_back(_T("TOTAL"));
 	m_VauleColumns.push_back(_T("EXCUTION"));
 }
 void CmassproductiontoolDlg::InitRangeGridColumns(int nDataLength)
@@ -288,9 +288,9 @@ void CmassproductiontoolDlg::InitRangeGridColumns(int nDataLength)
 
 	m_rangeGridColumns.push_back(_T("DELAY ms"));
 	m_rangeGridColumns.push_back(_T("RETURN"));
-	m_rangeGridColumns.push_back(_T("PASS CNT"));
-	m_rangeGridColumns.push_back(_T("FAIL CNT"));
-	m_rangeGridColumns.push_back(_T("TOTAL CNT"));
+	m_rangeGridColumns.push_back(_T("PASS"));
+	m_rangeGridColumns.push_back(_T("FAIL"));
+	m_rangeGridColumns.push_back(_T("TOTAL"));
 	m_rangeGridColumns.push_back(_T("EXCUTION"));
 }
 
@@ -402,6 +402,7 @@ int CmassproductiontoolDlg::initLogView()
 		TRACE(_T("Failed to subclass log rich edit control.\n"));
 		return -1;
 	}
+	MpSetTraceLogView(&m_logCtrl);
 
 	m_logCtrl.SetOptions(ECOOP_OR, ECO_AUTOWORDSELECTION); // 단어 선택 등
 	m_logCtrl.SetFontSize(10);

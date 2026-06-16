@@ -54,10 +54,10 @@ BEGIN
     "\r\n"
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)\r\n"
     "LANGUAGE 18, 1\r\n"
-    "#include ""res\\massproductiontool.rc2""  // Microsoft Visual C++ ????????살몖???????????뉖????????????????????耀붾굝???????袁⑸즴筌?????????좊틣?????源낆졂?????關?쒎첎?嫄??怨몃룶?????????怨몄）.\r\n"
-    "#include ""l.KOR\\afxres.rc""      // ??? ???????????濾???\n"
+    "#include ""res\\massproductiontool.rc2""  // Microsoft Visual C++ ?????????대첉????????????뼿?????????????????????遺얘턁???????熬곣뫖利당춯?????????醫딇떍?????繹먮굞議????????롮쾸?椰???⑤챶猷??????????⑤챷竊?\r\n"
+    "#include ""l.KOR\\afxres.rc""      // ??? ???????????癲???\n"
     "#if !defined(_AFXDLL)\r\n"
-    "#include ""l.KOR\\afxribbon.rc""   // MFC ??????좊틣??釉랁닕??????????????????猷밴텦?????遺얘턁??????? ??????좊틣?????源낆졂???\n"
+    "#include ""l.KOR\\afxribbon.rc""   // MFC ??????醫딇떍???됰엨????????????????????룸객????????븐뼐???????? ??????醫딇떍?????繹먮굞議???\n"
     "#endif\r\n"
     "#endif\r\n"
     "\0"
@@ -102,12 +102,12 @@ BEGIN
     DEFPUSHBUTTON   "확인",IDOK,-681,379,51,14
     PUSHBUTTON      "취소",IDCANCEL,-681,410,51,16
     CTEXT           "TODO: 여기에 대화 상자 컨트롤을 배치합니다.",IDC_STATIC,10,96,300,8
-    GROUPBOX        "Static",IDC_STATIC_PROP_SHEET_FRAME,7,34,1021,283
-    CONTROL         "",IDC_MAIN_RICHEDIT2_SYS_LOG,"RichEdit20W",WS_BORDER | WS_VSCROLL | WS_TABSTOP | 0x84,13,334,588,117
-    PUSHBUTTON      "▉ (STOP)",IDC_BTN_STOP,111,11,90,14
-    PUSHBUTTON      "❚❚ ▶ (START|PAUSE)",IDC_BTN_START,13,11,90,14
-    LTEXT           "Static",IDC_DEC_HEX,209,11,90,14
-    LTEXT           "Static",IDC_DEC_NORMAL,307,11,118,14
+    GROUPBOX        "Static",IDC_STATIC_PROP_SHEET_FRAME,7,26,1021,291
+    CONTROL         "",IDC_MAIN_RICHEDIT2_SYS_LOG,"RichEdit20W",ES_MULTILINE | ES_AUTOHSCROLL | WS_BORDER | WS_VSCROLL | WS_TABSTOP,13,334,588,117
+    PUSHBUTTON      "▉ (STOP)",IDC_BTN_STOP,420,7,90,14,NOT WS_VISIBLE
+    PUSHBUTTON      "❚❚ ▶ (START|PAUSE)",IDC_BTN_START,534,7,90,14,NOT WS_VISIBLE
+    LTEXT           "Static",IDC_DEC_HEX,13,7,90,14
+    LTEXT           "Static",IDC_DEC_NORMAL,114,7,118,14
     CONTROL         "CAN  INTERFACE",IDC_MAIN_RDO_CAN,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,653,353,76,10
     CONTROL         "UART INTERFACE",IDC_MAIN_RDO_UART,"Button",BS_AUTORADIOBUTTON,653,376,76,10
     CONTROL         "ETH  INTERFACE",IDC_MAIN_RDO_ETH,"Button",BS_AUTORADIOBUTTON,653,399,76,10
@@ -123,8 +123,10 @@ BEGIN
     CONTROL         "Custom1",IDC_CUSTOM_RANGE_GRID,"MFCGridCtrl",WS_TABSTOP,0,16,632,254
     PUSHBUTTON      "READ CFG FILE",IDC_BTN_RANGE_VALUE_READ_FILE,0,3,90,14
     PUSHBUTTON      "WRITE RESULT FILE",IDC_BTN_RANGE_VALUE_WRITE_FILE,98,3,90,14
-    EDITTEXT        IDC_RNG_LOOP,226,3,40,14,ES_AUTOHSCROLL
-    LTEXT           "LOOP",IDC_STATIC,200,3,19,8
+    LTEXT           "LOOP",IDC_STATIC,196,6,19,8
+    EDITTEXT        IDC_RNG_LOOP,223,3,40,14,  ES_CENTER
+    PUSHBUTTON      "❚❚ ▶ (START|PAUSE)",IDC_RNG_BT_RUN_ALL,271,3,107,14
+    PUSHBUTTON      "▉ (RESET)",IDC_RNG_BT_RESET,386,3,107,14
 END
 
 IDD_PROPPAGE_SYSTEM DIALOGEX 0, 0, 800, 343
@@ -136,7 +138,7 @@ BEGIN
     PUSHBUTTON      "READ CFG FILE",IDC_BTN_SYSTEM_READ_FILE,0,3,90,14
     PUSHBUTTON      "WRITE RESULT FILE",IDC_BTN_SYSTEM_WRITE_FILE,98,3,90,14
     CONTROL         "Custom3",IDC_CUSTOM_SYS_DUT_CFG,"MFCGridCtrl",WS_TABSTOP,380,16,350,219
-    EDITTEXT        IDC_SYS_LOOP,239,3,40,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SYS_LOOP,239,3,40,14,  ES_CENTER
     LTEXT           "LOOP",IDC_STATIC,200,3,19,8
 END
 
@@ -148,11 +150,13 @@ BEGIN
     CONTROL         "Custom1",IDC_CUSTOM_VALUE_GRID,"MFCGridCtrl",WS_TABSTOP,0,24,741,244
     PUSHBUTTON      "READ CFG FILE",IDC_BTN_PRO_VALUE_READ_FILE,0,3,90,14
     PUSHBUTTON      "WRITE RESET FILE",IDC_BTN_PRO_VALUE_WRITE_FILE,98,3,90,14
-    LTEXT           "LENGTH OF MAX DATA",IDC_STATIC,199,6,76,8
-    EDITTEXT        IDC_ET_PROP_MAX_DATA_LEN,283,4,40,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "APPLY",IDC_BTN_PROP_VALUE_APPLY,331,3,90,14
-    EDITTEXT        IDC_VALUE_LOOP,458,3,40,14,ES_AUTOHSCROLL
-    LTEXT           "LOOP",IDC_STATIC,427,3,19,8
+    LTEXT           "LENGTH OF MAX DATA",IDC_STATIC,196,6,76,8
+    EDITTEXT        IDC_ET_PROP_MAX_DATA_LEN,280,3,40,14,  ES_CENTER
+    PUSHBUTTON      "APPLY",IDC_BTN_PROP_VALUE_APPLY,328,3,90,14
+    LTEXT           "LOOP",IDC_STATIC,426,6,19,8
+    EDITTEXT        IDC_VALUE_LOOP,453,3,40,14,  ES_CENTER
+    PUSHBUTTON      "❚❚ ▶ (START|PAUSE)",IDC_VALUE_BT_RUN_ALL,501,3,107,14
+    PUSHBUTTON      "▉ (RESET)",IDC_VALUE_BT_RESET,616,3,107,14
 END
 
 
@@ -231,7 +235,6 @@ BEGIN
 
     IDD_PROPPAGE_VALUE_TEST, DIALOG
     BEGIN
-        RIGHTMARGIN, 715
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -290,10 +293,10 @@ END
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
 LANGUAGE 18, 1
-#include "res\massproductiontool.rc2"  // Microsoft Visual C++ ??怨몃뇶?????섎??熬곥룗???????筌뤾쑴異???洹먮봾爰???깅엷???덈펲.
-#include "l.KOR\afxres.rc"      // ??? ??뚮봽????븐슜爰?
+#include "res\massproductiontool.rc2"  // Microsoft Visual C++ ????????살몖???????????뉖????????????????????耀붾굝???????袁⑸즴筌?????????좊틣?????源낆졂?????關?쒎첎?嫄??怨몃룶?????????怨몄）.
+#include "l.KOR\afxres.rc"      // ??? ???????????濾???
 #if !defined(_AFXDLL)
-#include "l.KOR\afxribbon.rc"   // MFC ?洹먮맧沅??????쳜?猿낆뿉?嶺뚮씭留? ?洹먮봾爰??
+#include "l.KOR\afxribbon.rc"   // MFC ??????좊틣??釉랁닕??????????????????猷밴텦?????遺얘턁??????? ??????좊틣?????源낆졂???
 #endif
 #endif
 

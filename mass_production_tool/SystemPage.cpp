@@ -38,6 +38,7 @@ CSystemPage::CSystemPage()
 	: CPropertyPage(IDD_PROPPAGE_SYSTEM)
 	, m_backgroundColor(GetSysColor(COLOR_3DFACE))
 	, m_resourceGridSize(0, 0)
+	, m_systemInterface(new CSystemTestSimulInterface())
 {
 	m_psp.dwFlags |= PSP_USETITLE;
 	m_psp.pszTitle = _T("   SYSTEM   ");
@@ -89,7 +90,7 @@ BOOL CSystemPage::OnInitDialog()
 	m_backgroundBrush.CreateSolidBrush(m_backgroundColor);
 	InitGrid();
 	InitDutConfigGrid();
-
+	SetDlgItemText(IDC_SYS_LOOP, _T("1"));
 	return TRUE;
 }
 
@@ -123,7 +124,7 @@ void CSystemPage::InitGrid()
 	m_ctrlGrid.SetTextColor(RGB(0, 0, 0));
 	m_ctrlGrid.SetBkColor(RGB(255, 255, 255));
 	m_ctrlGrid.SetGridColor(RGB(0, 0, 0));
-	m_ctrlGrid.SetFixedBkColor(RGB(120, 120, 120));
+	m_ctrlGrid.SetFixedBkColor(RGB(181, 181, 181));
 	m_ctrlGrid.SetFixedTextColor(RGB(255, 255, 255));
 	RefreshGrid();
 }
@@ -175,7 +176,7 @@ void CSystemPage::InitDutConfigGrid()
 	m_dutConfigGrid.SetTextColor(RGB(0, 0, 0));
 	m_dutConfigGrid.SetBkColor(RGB(255, 255, 255));
 	m_dutConfigGrid.SetGridColor(RGB(0, 0, 0));
-	m_dutConfigGrid.SetFixedBkColor(RGB(120, 120, 120));
+	m_dutConfigGrid.SetFixedBkColor(RGB(181, 181, 181));
 	m_dutConfigGrid.SetFixedTextColor(RGB(255, 255, 255));
 	RefreshDutConfigGrid();
 #endif
@@ -356,6 +357,170 @@ void CSystemPage::ApplyGridCellColors()
 			m_ctrlGrid.SetItemFgColour(color.row, color.col, color.textColor);
 		}
 	}
+
+	const COLORREF passTextColor = MpGridThemeBkColor(MP_GRID_COLOR_DARK_BLUE);
+	const COLORREF failTextColor = MpGridThemeBkColor(MP_GRID_COLOR_DARK_RED);
+	int nPassCol = FindColumnIndex(m_columnNames, _T("PASS"));
+	int nFailCol = FindColumnIndex(m_columnNames, _T("FAIL"));
+
+	for (int nRow = 0; nRow < m_ctrlGrid.GetRowCount(); ++nRow)
+	{
+		if (nPassCol >= 0 && nPassCol < m_ctrlGrid.GetColumnCount())
+		{
+			m_ctrlGrid.SetItemFgColour(nRow, nPassCol, passTextColor);
+		}
+
+		if (nFailCol >= 0 && nFailCol < m_ctrlGrid.GetColumnCount())
+		{
+			m_ctrlGrid.SetItemFgColour(nRow, nFailCol, failTextColor);
+		}
+	}
+}
+
+int CSystemPage::FindColumnIndex(const std::vector<CString>& columns, LPCTSTR columnName) const
+{
+	CString target(columnName);
+	target.Trim();
+	for (size_t i = 0; i < columns.size(); ++i)
+	{
+		CString current(columns[i]);
+		current.Trim();
+		if (current.CompareNoCase(target) == 0)
+		{
+			return static_cast<int>(i);
+		}
+	}
+	return -1;
+}
+
+void CSystemPage::LoadDutConfigFromGridRows()
+{
+	m_timeoutConfig.Reset();
+	m_checkConfig.Reset();
+
+	const int nGroupCol = FindColumnIndex(m_dutConfigColumnNames, _T("GROUP"));
+	const int nItemCol = FindColumnIndex(m_dutConfigColumnNames, _T("ITEM"));
+	const int nValueCol = FindColumnIndex(m_dutConfigColumnNames, _T("VALUE"));
+	if (nGroupCol < 0 || nItemCol < 0 || nValueCol < 0)
+	{
+		return;
+	}
+
+	for (size_t nRow = 0; nRow < m_dutConfigRows.size(); ++nRow)
+	{
+		if (nGroupCol >= static_cast<int>(m_dutConfigRows[nRow].size()) ||
+			nItemCol >= static_cast<int>(m_dutConfigRows[nRow].size()) ||
+			nValueCol >= static_cast<int>(m_dutConfigRows[nRow].size()))
+		{
+			continue;
+		}
+
+		const CString strGroup = m_dutConfigRows[nRow][nGroupCol];
+		const CString strItem = m_dutConfigRows[nRow][nItemCol];
+		const CString strValue = m_dutConfigRows[nRow][nValueCol];
+
+		CString strGroupUpper(strGroup);
+		strGroupUpper.Trim();
+		strGroupUpper.MakeUpper();
+		DWORD numericValue = 0;
+		MpTryParseUInt32(strValue, numericValue);
+
+		if (strGroupUpper == _T("TIMEOUT"))
+		{
+			m_timeoutConfig.SetTimeout(strItem, numericValue);
+		}
+		else
+		{
+			m_checkConfig.SetCheck(strGroup, strItem, numericValue != 0);
+		}
+	}
+
+	TRACE(_T("[SYSTEM CFG] Timeout/Check config loaded from DUT config grid rows.\n"));
+}
+
+void CSystemPage::RunSystemTests()
+{
+	if (m_systemInterface.get() == NULL)
+	{
+		return;
+	}
+
+	int nTypeCol = FindColumnIndex(m_columnNames, _T("TYPE"));
+	int nExpectedCol = FindColumnIndex(m_columnNames, _T("EXPECTEDVALUE"));
+	if (nExpectedCol < 0)
+	{
+		nExpectedCol = FindColumnIndex(m_columnNames, _T("EXPECTED"));
+	}
+
+	int nReturnCol = FindColumnIndex(m_columnNames, _T("RETURN_VALUE"));
+	if (nReturnCol < 0)
+	{
+		nReturnCol = FindColumnIndex(m_columnNames, _T("RETURN"));
+	}
+
+	int nPassCol = FindColumnIndex(m_columnNames, _T("PASS"));
+	int nFailCol = FindColumnIndex(m_columnNames, _T("FAIL"));
+
+	if (nTypeCol < 0 || nExpectedCol < 0 || nReturnCol < 0 || nPassCol < 0 || nFailCol < 0)
+	{
+		TRACE(_T("[SYSTEM] Required column is missing.\n"));
+		return;
+	}
+
+	for (int nDataRow = 0; nDataRow < static_cast<int>(m_gridRows.size()); ++nDataRow)
+	{
+		if (m_gridRows[nDataRow].size() < m_columnNames.size())
+		{
+			m_gridRows[nDataRow].resize(m_columnNames.size());
+		}
+
+		CString strType = m_gridRows[nDataRow][nTypeCol];
+		BYTE typeValue = 0;
+		if (!MpTryGetSystemTestType(strType, typeValue) && !MpTryParseByte(strType, typeValue))
+		{
+			TRACE(_T("[SYSTEM] Unknown TYPE. row=%d, type=%s\n"), nDataRow + 1, strType.GetString());
+			continue;
+		}
+
+		DWORD expectedValue = 0;
+		if (!MpTryParseUInt32(m_gridRows[nDataRow][nExpectedCol], expectedValue))
+		{
+			TRACE(_T("[SYSTEM] Invalid EXPECTED value. row=%d\n"), nDataRow + 1);
+			continue;
+		}
+
+		DWORD returnValue = 0;
+		if (!m_systemInterface->WriteSystemRequest(typeValue) ||
+			!m_systemInterface->ReadSystemValue(expectedValue, returnValue))
+		{
+			TRACE(_T("[SYSTEM] Interface command failed. row=%d\n"), nDataRow + 1);
+			continue;
+		}
+
+		const BOOL bPass = (returnValue == expectedValue);
+		const int nGridRow = nDataRow + 1;
+		const int nPassCount = MpReadCountText(m_ctrlGrid.GetItemText(nGridRow, nPassCol)) + (bPass ? 1 : 0);
+		const int nFailCount = MpReadCountText(m_ctrlGrid.GetItemText(nGridRow, nFailCol)) + (bPass ? 0 : 1);
+
+		m_gridRows[nDataRow][nReturnCol] = MpFormatHex32(returnValue);
+		m_gridRows[nDataRow][nPassCol] = MpFormatDecimal(nPassCount);
+		m_gridRows[nDataRow][nFailCol] = MpFormatDecimal(nFailCount);
+
+		if (m_ctrlGrid.GetSafeHwnd() != NULL && nGridRow < m_ctrlGrid.GetRowCount())
+		{
+			m_ctrlGrid.SetItemText(nGridRow, nReturnCol, m_gridRows[nDataRow][nReturnCol]);
+			m_ctrlGrid.SetItemText(nGridRow, nPassCol, m_gridRows[nDataRow][nPassCol]);
+			m_ctrlGrid.SetItemText(nGridRow, nFailCol, m_gridRows[nDataRow][nFailCol]);
+		}
+
+		TRACE(_T("[SYSTEM] row=%d type=0x%02X return=0x%08X expected=0x%08X result=%s pass=%d fail=%d\n"),
+			nGridRow, typeValue, returnValue, expectedValue, bPass ? _T("PASS") : _T("FAIL"), nPassCount, nFailCount);
+	}
+
+	if (m_ctrlGrid.GetSafeHwnd() != NULL)
+	{
+		m_ctrlGrid.Refresh();
+	}
 }
 
 void CSystemPage::OnBnClickedBtnSystemReadFile()
@@ -394,6 +559,8 @@ void CSystemPage::OnBnClickedBtnSystemReadFile()
 
 	RefreshGrid();
 	RefreshDutConfigGrid();
+	LoadDutConfigFromGridRows();
+	RunSystemTests();
 
 	for (int row = 1; row < m_ctrlGrid.GetRowCount(); ++row)
 	{
