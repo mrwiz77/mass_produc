@@ -165,6 +165,13 @@ namespace
 	// COUNT columns stay decimal; other numeric columns become HEX without 0x.
 	CString FormatGridValue(const CString& strText, const CString& strColumnName)
 	{
+		CString strUpperColumn = TrimText(strColumnName);
+		strUpperColumn.MakeUpper();
+		if (strUpperColumn == _T("TEST_TYPE") || strUpperColumn.Left(3) == _T("COL"))
+		{
+			return TrimText(strText);
+		}
+
 		unsigned long long value = 0;
 		if (!TryParseInteger(strText, value))
 		{
@@ -536,10 +543,25 @@ std::vector<CString> CExcelXlsxHelper::BuildSystemColumns()
 {
 	std::vector<CString> columns;
 	columns.push_back(_T("TYPE"));
-	columns.push_back(_T("EXPECTEDVALUE"));
-	columns.push_back(_T("RETURN_VALUE"));
+	columns.push_back(_T("EXPECTED"));
+	columns.push_back(_T("RETURN"));
 	columns.push_back(_T("PASS"));
 	columns.push_back(_T("FAIL"));
+	columns.push_back(_T("TOTAL"));
+	return columns;
+}
+
+std::vector<CString> CExcelXlsxHelper::BuildIntegratedTestColumns(int nDataLength)
+{
+	std::vector<CString> columns;
+	columns.push_back(_T("TEST_TYPE"));
+	const int nSlotCount = max(20, nDataLength + 12);
+	for (int nSlot = 1; nSlot <= nSlotCount; ++nSlot)
+	{
+		CString strColumnName;
+		strColumnName.Format(_T("COL%02d"), nSlot);
+		columns.push_back(strColumnName);
+	}
 	return columns;
 }
 
@@ -644,7 +666,7 @@ std::vector<CString> CExcelXlsxHelper::BuildRangeColumns()
 	columns.push_back(_T("MIN  "));
 	columns.push_back(_T("MAX  "));
 	columns.push_back(_T("DELAY ms"));
-	columns.push_back(_T("RETURN "));
+	columns.push_back(_T("RETURN"));
 	columns.push_back(_T("PASS"));
 	columns.push_back(_T("FAIL"));
 	columns.push_back(_T("TOTAL"));
@@ -701,6 +723,234 @@ BOOL CExcelXlsxHelper::SaveRangeSheet(
 {
 	return SaveValueSheet(strFilePath, BuildRangeColumns(), rows);
 }
+
+BOOL CExcelXlsxHelper::LoadIntegratedTestSheet(
+	const CString& strFilePath,
+	int nDataLength,
+	std::vector<std::vector<CString>>& outRows)
+{
+	if (!LoadValueSheet(strFilePath, BuildIntegratedTestColumns(nDataLength), outRows))
+	{
+		return FALSE;
+	}
+
+	while (!outRows.empty())
+	{
+		CString strType = outRows.front().empty() ? _T("") : outRows.front()[0];
+		strType.Trim();
+		strType.MakeUpper();
+		strType.Replace(_T(" "), _T("_"));
+		if (strType == _T("R"))
+		{
+			if (outRows.size() >= 2)
+			{
+				CString strSecond = outRows[1].empty() ? _T("") : outRows[1][0];
+				strSecond.Trim();
+				strSecond.MakeUpper();
+				strSecond.Replace(_T(" "), _T("_"));
+				if (strSecond == _T("V"))
+				{
+					outRows.erase(outRows.begin(), outRows.begin() + 2);
+					continue;
+				}
+			}
+			break;
+		}
+		if (strType == _T("SYS_TEST") || strType == _T("RANGE_TEST") || strType == _T("VALUE_TEST") ||
+			strType == _T("S") || strType == _T("V"))
+		{
+			if (outRows.size() >= 3)
+			{
+				CString strSecond = outRows[1].empty() ? _T("") : outRows[1][0];
+				CString strThird = outRows[2].empty() ? _T("") : outRows[2][0];
+				strSecond.Trim();
+				strThird.Trim();
+				strSecond.MakeUpper();
+				strThird.MakeUpper();
+				strSecond.Replace(_T(" "), _T("_"));
+				strThird.Replace(_T(" "), _T("_"));
+				if ((strSecond == _T("RANGE_TEST") || strSecond == _T("R")) &&
+					(strThird == _T("VALUE_TEST") || strThird == _T("V")))
+				{
+					outRows.erase(outRows.begin(), outRows.begin() + 3);
+					continue;
+				}
+			}
+			break;
+		}
+		outRows.erase(outRows.begin());
+	}
+
+	return TRUE;
+}
+
+BOOL CExcelXlsxHelper::MergeSampleTestSheets(
+	const CString& strRangeFilePath,
+	const CString& strValueFilePath,
+	const CString& strSystemFilePath,
+	const CString& strOutputFilePath,
+	int nDataLength,
+	std::vector<std::vector<CString>>& outRows)
+{
+	const std::vector<CString> integratedColumns = BuildIntegratedTestColumns(nDataLength);
+	outRows.clear();
+
+	std::vector<std::vector<CString>> rangeRows;
+	std::vector<std::vector<CString>> valueRows;
+	std::vector<std::vector<CString>> systemRows;
+	if (!LoadRangeSheet(strRangeFilePath, rangeRows))
+	{
+		return FALSE;
+	}
+	if (!LoadValueSheet(strValueFilePath, BuildValueColumns(nDataLength), valueRows))
+	{
+		return FALSE;
+	}
+	if (!LoadSystemSheet(strSystemFilePath, systemRows))
+	{
+		return FALSE;
+	}
+
+	const std::vector<CString> rangeColumns = BuildRangeColumns();
+	const std::vector<CString> valueColumns = BuildValueColumns(nDataLength);
+	const std::vector<CString> systemColumns = BuildSystemColumns();
+
+	auto findSource = [](const std::vector<CString>& sourceColumns, LPCTSTR pszName) -> int
+	{
+		for (size_t i = 0; i < sourceColumns.size(); ++i)
+		{
+			if (IsSameHeaderName(sourceColumns[i], pszName))
+			{
+				return static_cast<int>(i);
+			}
+		}
+		return -1;
+	};
+
+	auto copyValue = [&](std::vector<CString>& targetRow, int nTargetCol, const std::vector<CString>& sourceColumns, const std::vector<CString>& sourceRow, LPCTSTR pszSourceName)
+	{
+		const int nSourceCol = findSource(sourceColumns, pszSourceName);
+		if (nTargetCol >= 0 && nTargetCol < static_cast<int>(targetRow.size()) &&
+			nSourceCol >= 0 && nSourceCol < static_cast<int>(sourceRow.size()))
+		{
+			targetRow[nTargetCol] = sourceRow[nSourceCol];
+		}
+	};
+
+	auto appendRows = [&](LPCTSTR pszTestType, const std::vector<CString>& sourceColumns, const std::vector<std::vector<CString>>& sourceRows)
+	{
+		for (size_t nRow = 0; nRow < sourceRows.size(); ++nRow)
+		{
+			std::vector<CString> row(integratedColumns.size());
+			row[0] = pszTestType;
+			CString strTestType(pszTestType);
+			strTestType.MakeUpper();
+			if (strTestType == _T("RANGE_TEST"))
+			{
+				row[0] = _T("RANGE_TEST");
+				copyValue(row, 1, sourceColumns, sourceRows[nRow], _T("INDEX"));
+				copyValue(row, 2, sourceColumns, sourceRows[nRow], _T("Description"));
+				copyValue(row, 3, sourceColumns, sourceRows[nRow], _T("MIN"));
+				copyValue(row, 4, sourceColumns, sourceRows[nRow], _T("MAX"));
+				copyValue(row, 5, sourceColumns, sourceRows[nRow], _T("DELAY ms"));
+				copyValue(row, 6, sourceColumns, sourceRows[nRow], _T("RETURN"));
+				copyValue(row, 7, sourceColumns, sourceRows[nRow], _T("PASS"));
+				copyValue(row, 8, sourceColumns, sourceRows[nRow], _T("FAIL"));
+				copyValue(row, 9, sourceColumns, sourceRows[nRow], _T("TOTAL"));
+			}
+			else if (strTestType == _T("VALUE_TEST"))
+			{
+				row[0] = _T("VALUE_TEST");
+				copyValue(row, 1, sourceColumns, sourceRows[nRow], _T("HDR"));
+				copyValue(row, 2, sourceColumns, sourceRows[nRow], _T("LENGTH"));
+				copyValue(row, 3, sourceColumns, sourceRows[nRow], _T("TYPE"));
+				copyValue(row, 4, sourceColumns, sourceRows[nRow], _T("CATEGORY"));
+				copyValue(row, 5, sourceColumns, sourceRows[nRow], _T("OPCODE"));
+				for (int nData = 0; nData < nDataLength; ++nData)
+				{
+					CString strData;
+					strData.Format(_T("DATA[%d]"), nData);
+					copyValue(row, 6 + nData, sourceColumns, sourceRows[nRow], strData);
+				}
+				copyValue(row, 14, sourceColumns, sourceRows[nRow], _T("DELAY ms"));
+				copyValue(row, 15, sourceColumns, sourceRows[nRow], _T("EXPECTED"));
+				copyValue(row, 16, sourceColumns, sourceRows[nRow], _T("RETURN"));
+				copyValue(row, 17, sourceColumns, sourceRows[nRow], _T("PASS"));
+				copyValue(row, 18, sourceColumns, sourceRows[nRow], _T("FAIL"));
+				copyValue(row, 19, sourceColumns, sourceRows[nRow], _T("TOTAL"));
+			}
+			else
+			{
+				row[0] = _T("SYS_TEST");
+				copyValue(row, 1, sourceColumns, sourceRows[nRow], _T("TYPE"));
+				copyValue(row, 2, sourceColumns, sourceRows[nRow], _T("EXPECTED"));
+				copyValue(row, 3, sourceColumns, sourceRows[nRow], _T("RETURN"));
+				copyValue(row, 4, sourceColumns, sourceRows[nRow], _T("PASS"));
+				copyValue(row, 5, sourceColumns, sourceRows[nRow], _T("FAIL"));
+				copyValue(row, 6, sourceColumns, sourceRows[nRow], _T("TOTAL"));
+			}
+			outRows.push_back(row);
+		}
+	};
+
+	appendRows(_T("RANGE_TEST"), rangeColumns, rangeRows);
+	appendRows(_T("VALUE_TEST"), valueColumns, valueRows);
+	appendRows(_T("SYS_TEST"), systemColumns, systemRows);
+
+	unsigned int seed = 0x1234ABCD;
+	for (size_t i = outRows.size(); i > 1; --i)
+	{
+		seed = seed * 1103515245u + 12345u;
+		const size_t j = static_cast<size_t>(seed % i);
+		std::swap(outRows[i - 1], outRows[j]);
+	}
+
+	std::vector<std::vector<CString>> exportRows;
+	std::vector<CString> sysHeader(integratedColumns.size());
+	sysHeader[0] = _T("SYS TEST");
+	sysHeader[1] = _T("TYPE");
+	sysHeader[2] = _T("EXPECTED");
+	sysHeader[3] = _T("RETURN");
+	sysHeader[4] = _T("PASS");
+	sysHeader[5] = _T("FAIL");
+	sysHeader[6] = _T("TOTAL");
+	sysHeader[7] = _T("EXCUTION");
+	std::vector<CString> rangeHeader(integratedColumns.size());
+	rangeHeader[0] = _T("RANGE TEST");
+	rangeHeader[1] = _T("INDEX");
+	rangeHeader[2] = _T("Description");
+	rangeHeader[3] = _T("MIN");
+	rangeHeader[4] = _T("MAX");
+	rangeHeader[5] = _T("DELAY ms");
+	rangeHeader[6] = _T("RETURN");
+	rangeHeader[7] = _T("PASS");
+	rangeHeader[8] = _T("FAIL");
+	rangeHeader[9] = _T("TOTAL");
+	rangeHeader[10] = _T("EXCUTION");
+	std::vector<CString> valueHeader(integratedColumns.size());
+	valueHeader[0] = _T("VALUE TEST");
+	valueHeader[1] = _T("HDR");
+	valueHeader[2] = _T("LENGTH");
+	valueHeader[3] = _T("TYPE");
+	valueHeader[4] = _T("CATEGORY");
+	valueHeader[5] = _T("OPCODE");
+	for (int nData = 0; nData < nDataLength; ++nData)
+	{
+		valueHeader[6 + nData].Format(_T("D[%d]"), nData);
+	}
+	valueHeader[14] = _T("DELAY ms");
+	valueHeader[15] = _T("EXPECTED");
+	valueHeader[16] = _T("RETURN");
+	valueHeader[17] = _T("PASS");
+	valueHeader[18] = _T("FAIL");
+	valueHeader[19] = _T("TOTAL");
+	valueHeader[20] = _T("EXCUTION");
+	exportRows.push_back(rangeHeader);
+	exportRows.push_back(valueHeader);
+	exportRows.insert(exportRows.end(), outRows.begin(), outRows.end());
+	return SaveValueSheet(strOutputFilePath, sysHeader, exportRows);
+}
+
 std::vector<std::vector<CString>> CExcelXlsxHelper::RemapRowsByHeader(
 	const std::vector<CString>& oldColumns,
 	const std::vector<std::vector<CString>>& oldRows,
@@ -1213,9 +1463,16 @@ BOOL CExcelXlsxHelper::SaveValueSheet(
 
 	std::vector<int> exportColumns;
 	std::vector<int> columnWidths;
+	CString strFirstColumn = TrimText(columns[0]);
+	strFirstColumn.MakeUpper();
+	strFirstColumn.Replace(_T(" "), _T("_"));
+	const BOOL bIntegratedHeader =
+		strFirstColumn == _T("SYS_TEST") ||
+		strFirstColumn == _T("RANGE_TEST") ||
+		strFirstColumn == _T("VALUE_TEST");
 	for (int nCol = 0; nCol < static_cast<int>(columns.size()); ++nCol)
 	{
-		if (IsExecutionColumn(columns[nCol]))
+		if (!bIntegratedHeader && IsExecutionColumn(columns[nCol]))
 		{
 			continue;
 		}

@@ -54,10 +54,10 @@ BEGIN
     "\r\n"
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)\r\n"
     "LANGUAGE 18, 1\r\n"
-    "#include ""res\\massproductiontool.rc2""  // Microsoft Visual C++ ?????????대첉????????????뼿?????????????????????遺얘턁???????熬곣뫖利당춯?????????醫딇떍?????繹먮굞議????????롮쾸?椰???⑤챶猷??????????⑤챷竊?\r\n"
-    "#include ""l.KOR\\afxres.rc""      // ??? ???????????癲???\n"
+    "#include ""res\\massproductiontool.rc2""  // Microsoft Visual C++ ???????????筌?????????????됱삩????????????????????????釉먮폁???????????썹땟戮녹??諭????????????ル탛??????嚥싲갭큔?댁쉮?????????嚥???癲?????쇨덧?????????????쇨덫櫻?\r\n"
+    "#include ""l.KOR\\afxres.rc""      // ??? ???????????????\n"
     "#if !defined(_AFXDLL)\r\n"
-    "#include ""l.KOR\\afxribbon.rc""   // MFC ??????醫딇떍???됰엨????????????????????룸객????????븐뼐???????? ??????醫딇떍?????繹먮굞議???\n"
+    "#include ""l.KOR\\afxribbon.rc""   // MFC ????????ル탛?????怨쀫엥?????????????????????룸㈇而?????????됰Ŧ????????? ????????ル탛??????嚥싲갭큔?댁쉮????\n"
     "#endif\r\n"
     "#endif\r\n"
     "\0"
@@ -101,41 +101,32 @@ FONT 9, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "확인",IDOK,-681,379,51,14
     PUSHBUTTON      "취소",IDCANCEL,-681,410,51,16
-    CTEXT           "",IDC_STATIC,-1000,-1000,1,1
-    LTEXT           "Static",IDC_DEC_HEX,13,7,90,14
-    LTEXT           "Static",IDC_DEC_NORMAL,114,7,118,14
+    CTEXT           "",IDC_STATIC,-1000,-1000,8,8
+    LTEXT           "Static",IDC_DEC_HEX,13,7,90,14,NOT WS_VISIBLE
+    LTEXT           "Static",IDC_DEC_NORMAL,835,506,118,14
     PUSHBUTTON      "▉ (STOP)",IDC_BTN_STOP,420,7,90,14,NOT WS_VISIBLE
     PUSHBUTTON      "❚❚ ▶ (START|PAUSE)",IDC_BTN_START,534,7,90,14,NOT WS_VISIBLE
-    GROUPBOX        "Static",IDC_STATIC_PROP_SHEET_FRAME,7,26,946,365
-    LTEXT           "SYSTEM LOG",IDC_DEC_SYS_LOG,14,402,130,14
-    CONTROL         "",IDC_MAIN_RICHEDIT2_SYS_LOG,"RichEdit20W",
-                    ES_MULTILINE | ES_AUTOHSCROLL | WS_BORDER | WS_VSCROLL | WS_TABSTOP,
-                    13,418,720,105
-    GROUPBOX        "NETWORK INTERFACE SELECTION",IDC_STATIC,755,418,185,105
-    CONTROL         "CAN  INTERFACE",IDC_MAIN_RDO_CAN,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,
-                    775,445,90,10
-    CONTROL         "UART INTERFACE",IDC_MAIN_RDO_UART,"Button",
-                    BS_AUTORADIOBUTTON,
-                    775,470,90,10
-    CONTROL         "ETH  INTERFACE",IDC_MAIN_RDO_ETH,"Button",
-                    BS_AUTORADIOBUTTON,
-                    775,495,90,10
+    GROUPBOX        "Static",IDC_STATIC_PROP_SHEET_FRAME,7,7,946,376
+    CONTROL         "",IDC_MAIN_RICHEDIT2_SYS_LOG,"RichEdit20W",ES_MULTILINE | ES_AUTOHSCROLL | WS_BORDER | WS_VSCROLL | WS_TABSTOP,7,387,454,140
+    GROUPBOX        "NETWORK INTERFACE",IDC_STATIC,837,397,102,105
+    CONTROL         "CAN  INTERFACE",IDC_MAIN_RDO_CAN,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,851,424,90,10
+    CONTROL         "UART INTERFACE",IDC_MAIN_RDO_UART,"Button",BS_AUTORADIOBUTTON,851,449,90,10
+    CONTROL         "ETH  INTERFACE",IDC_MAIN_RDO_ETH,"Button",BS_AUTORADIOBUTTON,851,474,90,10
+    CONTROL         "",IDC_MAIN_LIST,"SysListView32",LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,473,386,352,142
 END
 
-IDD_PROPPAGE_RANGE_TEST DIALOGEX 0, 0, 930, 355
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
-CAPTION "속성 페이지"
+IDD_PROPPAGE_RANGE_TEST DIALOGEX 0, 0, 955, 355
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
     PUSHBUTTON      "READ CFG FILE",IDC_BTN_RANGE_VALUE_READ_FILE,0,3,90,14
-    PUSHBUTTON      "WRITE RESULT FILE",IDC_BTN_RANGE_VALUE_WRITE_FILE,98,3,90,14
-    LTEXT           "LOOP",IDC_STATIC,196,6,19,8
-    EDITTEXT        IDC_RNG_LOOP,223,3,40,14,ES_AUTOHSCROLL | ES_CENTER
+    PUSHBUTTON      "WRITE RESULT FILE",IDC_BTN_RANGE_VALUE_WRITE_FILE,98,3,90,14,NOT WS_VISIBLE
+    LTEXT           "LOOP",IDC_STATIC,196,6,31,8
+    EDITTEXT        IDC_RNG_LOOP,229,3,34,14,ES_CENTER | ES_AUTOHSCROLL
     PUSHBUTTON      "❚❚ ▶ (START|PAUSE)",IDC_RNG_BT_RUN_ALL,271,3,107,14
     PUSHBUTTON      "▉ (RESET)",IDC_RNG_BT_RESET,386,3,107,14
-    CONTROL         "Custom1",IDC_CUSTOM_RANGE_GRID,"MFCGridCtrl",
-                    WS_TABSTOP,0,24,929,330
+    CONTROL         "Custom1",IDC_CUSTOM_RANGE_GRID,"MFCGridCtrl",WS_TABSTOP,0,24,929,330
+    CONTROL         "ALL TEST PASS",IDC_CK_SUCCESS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,515,3,67,10
 END
 
 IDD_PROPPAGE_SYSTEM DIALOGEX 0, 0, 930, 355
@@ -145,10 +136,8 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
     PUSHBUTTON      "READ CFG FILE",IDC_BTN_SYSTEM_READ_FILE,0,3,90,14
     PUSHBUTTON      "WRITE RESULT FILE",IDC_BTN_SYSTEM_WRITE_FILE,98,3,90,14
-    CONTROL         "Custom1",IDC_CUSTOM_PROP_SYSTEM_GRID,"MFCGridCtrl",
-                    WS_TABSTOP,0,24,455,330
-    CONTROL         "Custom3",IDC_CUSTOM_SYS_DUT_CFG,"MFCGridCtrl",
-                    WS_TABSTOP,475,24,455,330
+    CONTROL         "Custom1",IDC_CUSTOM_PROP_SYSTEM_GRID,"MFCGridCtrl",WS_TABSTOP,0,24,455,330
+    CONTROL         "Custom3",IDC_CUSTOM_SYS_DUT_CFG,"MFCGridCtrl",WS_TABSTOP,475,24,455,330
 END
 
 IDD_PROPPAGE_VALUE_TEST DIALOGEX 0, 0, 930, 355
@@ -159,15 +148,15 @@ BEGIN
     PUSHBUTTON      "READ CFG FILE",IDC_BTN_PRO_VALUE_READ_FILE,0,3,90,14
     PUSHBUTTON      "WRITE RESULT FILE",IDC_BTN_PRO_VALUE_WRITE_FILE,98,3,90,14
     LTEXT           "LENGTH OF MAX DATA",IDC_STATIC,196,6,76,8
-    EDITTEXT        IDC_ET_PROP_MAX_DATA_LEN,280,3,40,14,ES_AUTOHSCROLL | ES_CENTER
+    EDITTEXT        IDC_ET_PROP_MAX_DATA_LEN,280,3,40,14,ES_CENTER | ES_AUTOHSCROLL
     PUSHBUTTON      "APPLY",IDC_BTN_PROP_VALUE_APPLY,328,3,90,14
     LTEXT           "LOOP",IDC_STATIC,426,6,19,8
-    EDITTEXT        IDC_VALUE_LOOP,453,3,40,14,ES_AUTOHSCROLL | ES_CENTER
+    EDITTEXT        IDC_VALUE_LOOP,453,3,40,14,ES_CENTER | ES_AUTOHSCROLL
     PUSHBUTTON      "❚❚ ▶ (START|PAUSE)",IDC_VALUE_BT_RUN_ALL,501,3,107,14
     PUSHBUTTON      "▉ (RESET)",IDC_VALUE_BT_RESET,616,3,107,14
-    CONTROL         "Custom1",IDC_CUSTOM_VALUE_GRID,"MFCGridCtrl",
-                    WS_TABSTOP,0,24,929,330
+    CONTROL         "Custom1",IDC_CUSTOM_VALUE_GRID,"MFCGridCtrl",WS_TABSTOP,0,24,929,330
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -228,7 +217,6 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         TOPMARGIN, 7
-        BOTTOMMARGIN, 414
     END
 
     IDD_PROPPAGE_RANGE_TEST, DIALOG
@@ -302,10 +290,10 @@ END
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
 LANGUAGE 18, 1
-#include "res\massproductiontool.rc2"  // Microsoft Visual C++ ????????살몖???????????뉖????????????????????耀붾굝???????袁⑸즴筌?????????좊틣?????源낆졂?????關?쒎첎?嫄??怨몃룶?????????怨몄）.
-#include "l.KOR\afxres.rc"      // ??? ???????????濾???
+#include "res\massproductiontool.rc2"  // Microsoft Visual C++ ???????????筌?????????????됱삩????????????????????????釉먮폁???????????썹땟戮녹??諭????????????ル탛??????嚥싲갭큔?댁쉮?????????嚥???癲?????쇨덧?????????????쇨덫櫻?
+#include "l.KOR\afxres.rc"      // ??? ???????????????
 #if !defined(_AFXDLL)
-#include "l.KOR\afxribbon.rc"   // MFC ??????좊틣??釉랁닕??????????????????猷밴텦?????遺얘턁??????? ??????좊틣?????源낆졂???
+#include "l.KOR\afxribbon.rc"   // MFC ????????ル탛?????怨쀫엥?????????????????????룸㈇而?????????됰Ŧ????????? ????????ル탛??????嚥싲갭큔?댁쉮????
 #endif
 #endif
 

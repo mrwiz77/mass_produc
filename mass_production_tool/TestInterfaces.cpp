@@ -257,7 +257,7 @@ BOOL MpTryGetSystemTestType(const CString& typeName, BYTE& typeValue)
 
 CSystemTestSimulInterface::CSystemTestSimulInterface()
 	: m_lastTypeValue(0)
-	, m_nextPass(TRUE)
+	, m_randomState(GetTickCount())
 {
 }
 
@@ -270,10 +270,35 @@ BOOL CSystemTestSimulInterface::WriteSystemRequest(BYTE typeValue)
 
 BOOL CSystemTestSimulInterface::ReadSystemValue(DWORD expectedValue, DWORD& returnValue)
 {
-	returnValue = m_nextPass ? expectedValue : (expectedValue ^ 0x00000001);
+	m_randomState = m_randomState * 1103515245u + 12345u + m_lastTypeValue;
+	const BOOL bPass = ((m_randomState >> 16) & 0x1) == 0;
+	returnValue = bPass ? expectedValue : (expectedValue ^ 0x00000001);
 	TRACE(_T("[SIM][SYSTEM] READ = 0x%08X, expected=0x%08X, result=%s\n"),
-		returnValue, expectedValue, m_nextPass ? _T("PASS") : _T("FAIL"));
-	m_nextPass = !m_nextPass;
+		returnValue, expectedValue, bPass ? _T("PASS") : _T("FAIL"));
+	return TRUE;
+}
+
+BOOL CSystemTestSimulInterface::ReadSystemBytes(const std::vector<BYTE>& expectedBytes, std::vector<BYTE>& returnBytes)
+{
+	m_randomState = m_randomState * 1103515245u + 12345u + m_lastTypeValue;
+	const BOOL bPass = ((m_randomState >> 16) & 0x1) == 0;
+	returnBytes = expectedBytes;
+	if (!bPass)
+	{
+		if (returnBytes.empty())
+		{
+			returnBytes.push_back(0x00);
+		}
+		else
+		{
+			returnBytes[returnBytes.size() - 1] ^= 0x01;
+		}
+	}
+
+	TRACE(_T("[SIM][SYSTEM] READ bytes=%u, expectedBytes=%u, result=%s\n"),
+		static_cast<unsigned int>(returnBytes.size()),
+		static_cast<unsigned int>(expectedBytes.size()),
+		bPass ? _T("PASS") : _T("FAIL"));
 	return TRUE;
 }
 

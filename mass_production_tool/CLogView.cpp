@@ -18,7 +18,13 @@ namespace
         CString upper(message);
         upper.MakeUpper();
 
-        if (upper.Find(_T("ERR")) >= 0 || upper.Find(_T("ERROR")) >= 0)
+        if (upper.Find(_T("ERR")) >= 0 ||
+            upper.Find(_T("ERROR")) >= 0 ||
+            upper.Find(_T("FAILED")) >= 0 ||
+            upper.Find(_T("FAILURE")) >= 0 ||
+            upper.Find(_T("INVALID")) >= 0 ||
+            upper.Find(_T("UNKNOWN")) >= 0 ||
+            upper.Find(_T("REQUIRED COLUMN IS MISSING")) >= 0)
         {
             return LogLevel::ERROR_U;
         }
@@ -39,6 +45,13 @@ namespace
 
     void MpAppendTraceToLogView(const CString& message)
     {
+        CString upper(message);
+        upper.MakeUpper();
+        if (upper.Find(_T("DRAW COUNTER TICKS")) >= 0)
+        {
+            return;
+        }
+
         if (g_pTraceLogView != NULL && ::IsWindow(g_pTraceLogView->GetSafeHwnd()))
         {
             g_pTraceLogView->AppendLog(MpDetectTraceLogLevel(message), message);

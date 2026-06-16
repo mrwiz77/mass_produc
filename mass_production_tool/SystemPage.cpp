@@ -224,15 +224,15 @@ void CSystemPage::RefreshDutConfigGrid()
 	{
 		if (nCol == 0)
 		{
-			m_dutConfigGrid.SetColumnWidth(nCol, 150);
+			m_dutConfigGrid.SetColumnWidth(nCol, MulDiv(150, 110, 100));
 		}
 		else if (nCol == 1)
 		{
-			m_dutConfigGrid.SetColumnWidth(nCol, 340);
+			m_dutConfigGrid.SetColumnWidth(nCol, MulDiv(340, 110, 100));
 		}
 		else
 		{
-			m_dutConfigGrid.SetColumnWidth(nCol, 130);
+			m_dutConfigGrid.SetColumnWidth(nCol, MulDiv(130, 110, 100));
 		}
 	}
 
@@ -310,7 +310,7 @@ void CSystemPage::RefreshGrid()
 
 	for (int nCol = 0; nCol < nColumnCount; ++nCol)
 	{
-		m_ctrlGrid.SetColumnWidth(nCol, nCol == 0 ? 230 : 130);
+		m_ctrlGrid.SetColumnWidth(nCol, MulDiv(nCol == 0 ? 230 : 130, 110, 100));
 	}
 
 	for (int nRow = 0; nRow < nRowCount; ++nRow)
@@ -453,20 +453,21 @@ void CSystemPage::RunSystemTests()
 	}
 
 	int nTypeCol = FindColumnIndex(m_columnNames, _T("TYPE"));
-	int nExpectedCol = FindColumnIndex(m_columnNames, _T("EXPECTEDVALUE"));
+	int nExpectedCol = FindColumnIndex(m_columnNames, _T("EXPECTED"));
 	if (nExpectedCol < 0)
 	{
-		nExpectedCol = FindColumnIndex(m_columnNames, _T("EXPECTED"));
+		nExpectedCol = FindColumnIndex(m_columnNames, _T("EXPECTEDVALUE"));
 	}
 
-	int nReturnCol = FindColumnIndex(m_columnNames, _T("RETURN_VALUE"));
+	int nReturnCol = FindColumnIndex(m_columnNames, _T("RETURN"));
 	if (nReturnCol < 0)
 	{
-		nReturnCol = FindColumnIndex(m_columnNames, _T("RETURN"));
+		nReturnCol = FindColumnIndex(m_columnNames, _T("RETURN_VALUE"));
 	}
 
 	int nPassCol = FindColumnIndex(m_columnNames, _T("PASS"));
 	int nFailCol = FindColumnIndex(m_columnNames, _T("FAIL"));
+	int nTotalCol = FindColumnIndex(m_columnNames, _T("TOTAL"));
 
 	if (nTypeCol < 0 || nExpectedCol < 0 || nReturnCol < 0 || nPassCol < 0 || nFailCol < 0)
 	{
@@ -508,20 +509,29 @@ void CSystemPage::RunSystemTests()
 		const int nGridRow = nDataRow + 1;
 		const int nPassCount = MpReadCountText(m_ctrlGrid.GetItemText(nGridRow, nPassCol)) + (bPass ? 1 : 0);
 		const int nFailCount = MpReadCountText(m_ctrlGrid.GetItemText(nGridRow, nFailCol)) + (bPass ? 0 : 1);
+		const int nTotalCount = nPassCount + nFailCount;
 
 		m_gridRows[nDataRow][nReturnCol] = MpFormatHex32(returnValue);
 		m_gridRows[nDataRow][nPassCol] = MpFormatDecimal(nPassCount);
 		m_gridRows[nDataRow][nFailCol] = MpFormatDecimal(nFailCount);
+		if (nTotalCol >= 0)
+		{
+			m_gridRows[nDataRow][nTotalCol] = MpFormatDecimal(nTotalCount);
+		}
 
 		if (m_ctrlGrid.GetSafeHwnd() != NULL && nGridRow < m_ctrlGrid.GetRowCount())
 		{
 			m_ctrlGrid.SetItemText(nGridRow, nReturnCol, m_gridRows[nDataRow][nReturnCol]);
 			m_ctrlGrid.SetItemText(nGridRow, nPassCol, m_gridRows[nDataRow][nPassCol]);
 			m_ctrlGrid.SetItemText(nGridRow, nFailCol, m_gridRows[nDataRow][nFailCol]);
+			if (nTotalCol >= 0)
+			{
+				m_ctrlGrid.SetItemText(nGridRow, nTotalCol, m_gridRows[nDataRow][nTotalCol]);
+			}
 		}
 
-		TRACE(_T("[SYSTEM] row=%d type=0x%02X return=0x%08X expected=0x%08X result=%s pass=%d fail=%d\n"),
-			nGridRow, typeValue, returnValue, expectedValue, bPass ? _T("PASS") : _T("FAIL"), nPassCount, nFailCount);
+		TRACE(_T("[SYSTEM] row=%d type=0x%02X return=0x%08X expected=0x%08X result=%s pass=%d fail=%d total=%d\n"),
+			nGridRow, typeValue, returnValue, expectedValue, bPass ? _T("PASS") : _T("FAIL"), nPassCount, nFailCount, nTotalCount);
 	}
 
 	if (m_ctrlGrid.GetSafeHwnd() != NULL)

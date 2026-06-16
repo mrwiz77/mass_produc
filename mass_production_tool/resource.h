@@ -51,6 +51,10 @@
 #define IDC_DEC_SYS_LOG                 1022
 #define IDC_VALUE_BT_RESET              1022
 #define IDC_DEC_NETWORK2                1023
+#define IDC_LIST1                       1023
+#define IDC_MAIN_LIST                   1023
+#define IDC_CHECK1                      1024
+#define IDC_CK_SUCCESS                  1024
 
 // Next default values for new objects
 // 
@@ -58,7 +62,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1022
+#define _APS_NEXT_CONTROL_VALUE         1025
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

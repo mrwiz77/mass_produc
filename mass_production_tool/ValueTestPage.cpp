@@ -152,13 +152,13 @@ void CValueTestPage::InitGrid()
 	m_ctrlGrid.SetFixedRowCount(1);
 	m_ctrlGrid.SetFixedBkColor(RGB(181, 181, 181));
 	m_ctrlGrid.SetFixedTextColor(RGB(255, 255, 255));
-	m_ctrlGrid.SetColumnWidth(nButtonCol, 80);
+	m_ctrlGrid.SetColumnWidth(nButtonCol, MulDiv(80, 110, 100));
 	for (int nCol = 0; nCol < m_ctrlGrid.GetColumnCount(); nCol++)
 	{
-		m_ctrlGrid.SetColumnWidth(nCol, 80);
+		m_ctrlGrid.SetColumnWidth(nCol, MulDiv(80, 110, 100));
 	}
-	m_ctrlGrid.SetColumnWidth(nButtonCol, 100);
-	m_ctrlGrid.SetColumnWidth(3, 100);
+	m_ctrlGrid.SetColumnWidth(nButtonCol, MulDiv(100, 110, 100));
+	m_ctrlGrid.SetColumnWidth(3, MulDiv(100, 110, 100));
 	RefreshGrid();
 }
 
@@ -199,15 +199,15 @@ void CValueTestPage::RefreshGrid()
 
 	for (int nCol = 0; nCol < m_ctrlGrid.GetColumnCount(); nCol++)
 	{
-		m_ctrlGrid.SetColumnWidth(nCol, 80);
+		m_ctrlGrid.SetColumnWidth(nCol, MulDiv(80, 110, 100));
 	}
-	m_ctrlGrid.SetColumnWidth(nButtonCol, 100);
+	m_ctrlGrid.SetColumnWidth(nButtonCol, MulDiv(100, 110, 100));
 	//m_ctrlGrid.SetColumnWidth(nButtonCol - 1, 130);
 	//m_ctrlGrid.SetColumnWidth(nButtonCol - 2, 130);
 	//m_ctrlGrid.SetColumnWidth(nButtonCol - 3, 130);
 	if (nColumnCount > 3)
 	{
-		m_ctrlGrid.SetColumnWidth(3, 100);
+		m_ctrlGrid.SetColumnWidth(3, MulDiv(100, 110, 100));
 	}
 
 	for (int nRow = 0; nRow < m_ctrlGrid.GetRowCount(); nRow++)
@@ -385,7 +385,11 @@ void CValueTestPage::RunValueTestRow(int nGridRow, BOOL bUseDelay)
 	const int nCategoryCol = FindColumnIndex(_T("CATEGORY"));
 	const int nOpcodeCol = FindColumnIndex(_T("OPCODE"));
 	const int nExpectedCol = FindColumnIndex(_T("EXPECTED"));
-	const int nReturnCol = FindColumnIndex(_T("RETURN"));
+	int nReturnCol = FindColumnIndex(_T("RETURN"));
+	if (nReturnCol < 0)
+	{
+		nReturnCol = FindColumnIndex(_T("RETURN_VALUE"));
+	}
 	const int nPassCol = FindColumnIndex(_T("PASS"));
 	const int nFailCol = FindColumnIndex(_T("FAIL"));
 	const int nTotalCol = FindColumnIndex(_T("TOTAL"));
@@ -495,7 +499,11 @@ void CValueTestPage::RunValueTestRow(int nGridRow, BOOL bUseDelay)
 
 void CValueTestPage::ResetValueTestResults()
 {
-	const int nReturnCol = FindColumnIndex(_T("RETURN"));
+	int nReturnCol = FindColumnIndex(_T("RETURN"));
+	if (nReturnCol < 0)
+	{
+		nReturnCol = FindColumnIndex(_T("RETURN_VALUE"));
+	}
 	const int nPassCol = FindColumnIndex(_T("PASS"));
 	const int nFailCol = FindColumnIndex(_T("FAIL"));
 	const int nTotalCol = FindColumnIndex(_T("TOTAL"));

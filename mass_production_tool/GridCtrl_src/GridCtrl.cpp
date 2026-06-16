@@ -1813,7 +1813,7 @@ void CGridCtrl::OnDraw(CDC* pDC)
 #ifdef _DEBUG
 	LARGE_INTEGER iEndCount;
 	QueryPerformanceCounter(&iEndCount);
-	TRACE1("Draw counter ticks: %d\n", iEndCount.LowPart-iStartCount.LowPart);
+	// Suppress high-frequency draw timing traces from the UI log.
 #endif
 
 }

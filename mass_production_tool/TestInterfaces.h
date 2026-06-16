@@ -59,6 +59,7 @@ public:
 	virtual ~ISystemTestInterface() {}
 	virtual BOOL WriteSystemRequest(BYTE typeValue) = 0;
 	virtual BOOL ReadSystemValue(DWORD expectedValue, DWORD& returnValue) = 0;
+	virtual BOOL ReadSystemBytes(const std::vector<BYTE>& expectedBytes, std::vector<BYTE>& returnBytes) = 0;
 };
 
 class IRangeTestInterface
@@ -83,10 +84,11 @@ public:
 	CSystemTestSimulInterface();
 	virtual BOOL WriteSystemRequest(BYTE typeValue);
 	virtual BOOL ReadSystemValue(DWORD expectedValue, DWORD& returnValue);
+	virtual BOOL ReadSystemBytes(const std::vector<BYTE>& expectedBytes, std::vector<BYTE>& returnBytes);
 
 private:
 	BYTE m_lastTypeValue;
-	BOOL m_nextPass;
+	DWORD m_randomState;
 };
 
 class CRangeTestSimulInterface : public IRangeTestInterface

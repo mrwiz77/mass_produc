@@ -75,6 +75,7 @@ public:
 	static std::vector<CString> BuildValueColumns(int nDataLength);
 	static std::vector<CString> BuildRangeColumns();
 	static std::vector<CString> BuildSystemColumns();
+	static std::vector<CString> BuildIntegratedTestColumns(int nDataLength);
 	static std::vector<CString> BuildSystemTypes();
 	static std::vector<CString> BuildSystemDutConfigColumns();
 	static std::vector<std::vector<CString>> BuildDefaultSystemDutConfigRows();
@@ -116,6 +117,19 @@ public:
 		const CString& strFilePath,
 		const std::vector<CString>& columns,
 		const std::vector<std::vector<CString>>& rows);
+
+	static BOOL LoadIntegratedTestSheet(
+		const CString& strFilePath,
+		int nDataLength,
+		std::vector<std::vector<CString>>& outRows);
+
+	static BOOL MergeSampleTestSheets(
+		const CString& strRangeFilePath,
+		const CString& strValueFilePath,
+		const CString& strSystemFilePath,
+		const CString& strOutputFilePath,
+		int nDataLength,
+		std::vector<std::vector<CString>>& outRows);
 
 	static std::vector<std::vector<CString>> RemapRowsByHeader(
 		const std::vector<CString>& oldColumns,

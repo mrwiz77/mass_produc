@@ -6,11 +6,27 @@
 
 #include <vector>
 #include <afxdlgs.h>
+#include <afxcmn.h>
 #include "RangeTestPage.h"
 #include "SystemPage.h"
 #include "ValueTestPage.h"
 #include "CLogView.h"
 #include "CStaticColorText.h"
+#include "TestInterfaces.h"
+
+class CMpPropertySheet : public CPropertySheet
+{
+public:
+	CMpPropertySheet();
+	void SetBackgroundColor(COLORREF color);
+
+protected:
+	CBrush m_backgroundBrush;
+	COLORREF m_backgroundColor;
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	DECLARE_MESSAGE_MAP()
+};
 
 // CmassproductiontoolDlg 대화 상자
 class CmassproductiontoolDlg : public CDialogEx
@@ -18,6 +34,9 @@ class CmassproductiontoolDlg : public CDialogEx
 // 생성입니다.
 public:
 	CmassproductiontoolDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
+	BOOL LoadSystemConfigFile(const CString& strFilePath, BOOL bLoadRangeGrid);
+	void UpdateOverallTestStatus(BOOL bAllCompleted, BOOL bAnyFail);
+	void ResetOverallTestStatus();
 
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
@@ -26,7 +45,7 @@ public:
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 지원입니다.
-	CPropertySheet m_propertySheet;
+	CMpPropertySheet m_propertySheet;
 	CRangeTestPage m_rangeTestPage;
 	CSystemPage m_systemPage;
 	CValueTestPage m_valueTestPage;
@@ -35,9 +54,14 @@ public:
 	CStaticColorText m_decNormalStatic;
 	CStaticColorText m_networkStatic;
 	CStaticColorText m_syslogStatic;
+#ifdef IDC_MAIN_LIST
+	CListCtrl m_mainListCtrl;
+#endif
 	CFont m_font;
 	CBrush m_backgroundBrush;
 	COLORREF m_backgroundColor;
+	MP_SYSTEM_TIMEOUT_CONFIG m_timeoutConfig;
+	MP_SYSTEM_CHECK_CONFIG m_checkConfig;
 	std::vector<CString> m_rangeGridColumns;
 	std::vector<CString> m_VauleColumns;
 	CSize m_initialClientSize;
@@ -46,6 +70,10 @@ public:
 	void InitValueGridColumns(int nDataLength);
 	void LayoutPropertySheet();
 	int initLogView();
+	BOOL LoadStartupSystemConfigFile();
+	void DisplaySystemConfigList(const std::vector<CString>& columns, const std::vector<std::vector<CString>>& rows);
+	void ApplySystemConfigRows(const std::vector<CString>& columns, const std::vector<std::vector<CString>>& rows);
+	int FindColumnIndex(const std::vector<CString>& columns, LPCTSTR columnName) const;
 	CString GetMainInterfaceRadioName(UINT nCheckedId) const;
 	void TraceMainInterfaceRadioState(LPCTSTR pszReason) const;
 	void MakeMainInterfaceControlsTransparent();

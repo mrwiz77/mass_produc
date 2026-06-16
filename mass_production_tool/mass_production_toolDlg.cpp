@@ -7,6 +7,7 @@
 #include "mass_production_tool.h"
 #include "mass_production_toolDlg.h"
 #include "afxdialogex.h"
+#include "ExcelXlsxHelper.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -45,6 +46,49 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
+BEGIN_MESSAGE_MAP(CMpPropertySheet, CPropertySheet)
+	ON_WM_ERASEBKGND()
+	ON_WM_CTLCOLOR()
+END_MESSAGE_MAP()
+
+CMpPropertySheet::CMpPropertySheet()
+	: CPropertySheet()
+	, m_backgroundColor(GetSysColor(COLOR_3DFACE))
+{
+	m_backgroundBrush.CreateSolidBrush(m_backgroundColor);
+}
+
+void CMpPropertySheet::SetBackgroundColor(COLORREF color)
+{
+	m_backgroundColor = color;
+	m_backgroundBrush.DeleteObject();
+	m_backgroundBrush.CreateSolidBrush(m_backgroundColor);
+	if (GetSafeHwnd() != NULL)
+	{
+		Invalidate(FALSE);
+	}
+}
+
+BOOL CMpPropertySheet::OnEraseBkgnd(CDC* pDC)
+{
+	CRect rect;
+	GetClientRect(&rect);
+	pDC->FillSolidRect(&rect, m_backgroundColor);
+	return TRUE;
+}
+
+HBRUSH CMpPropertySheet::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	if (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC)
+	{
+		pDC->SetBkMode(TRANSPARENT);
+		pDC->SetBkColor(m_backgroundColor);
+		return static_cast<HBRUSH>(m_backgroundBrush.GetSafeHandle());
+	}
+
+	return CPropertySheet::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
 
 // CmassproductiontoolDlg 대화 상자
 
@@ -82,9 +126,11 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 	SetWindowText(_T("UNITRONTECH MASS PRODUCTION TOOL 1.0.0"));
+	TRACE(_T("[INFO][SYSTEM] Main dialog initialization started.\n"));
 	m_backgroundColor = GetSysColor(COLOR_3DFACE);
 	m_backgroundBrush.DeleteObject();
 	m_backgroundBrush.CreateSolidBrush(m_backgroundColor);
+	m_propertySheet.SetBackgroundColor(m_backgroundColor);
 
 	// 시스템 메뉴에 "정보..." 메뉴 항목을 추가합니다.
 
@@ -115,14 +161,14 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 #ifdef IDC_DEC_HEX
 	if (m_decHexStatic.SubclassDlgItem(IDC_DEC_HEX, this))
 	{
-		m_decHexStatic.SetDisplayText(_T("HEX VALUE"));
+		m_decHexStatic.SetDisplayText(_T("SYSTEM STATUS"));
 		m_decHexStatic.SetThemeColor(MP_GRID_COLOR_DARK_ORANGE);
 		m_decHexStatic.SetTextColor(RGB(255, 255, 255));
 	}
 #endif
 	if (m_decNormalStatic.SubclassDlgItem(IDC_DEC_NORMAL, this))
 	{
-		m_decNormalStatic.SetDisplayText(_T("NORMAL(int,string) VALUE"));
+		m_decNormalStatic.SetDisplayText(_T("Config file is not opended"));
 		m_decNormalStatic.SetThemeColor(MP_GRID_COLOR_DARK_GRAY);
 		m_decNormalStatic.SetTextColor(RGB(255, 255, 255));
 	}
@@ -143,23 +189,23 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 	
 	
 
-	InitRangeGridColumns(8);
 	InitValueGridColumns(8);
-	m_rangeTestPage.SetColumnNames(m_rangeGridColumns);
+	m_rangeTestPage.SetColumnNames(CExcelXlsxHelper::BuildIntegratedTestColumns(8));
 	m_valueTestPage.SetColumnNames(m_VauleColumns);
 
 	
-	m_propertySheet.AddPage(&m_systemPage);
+	//m_propertySheet.AddPage(&m_systemPage);
 	m_propertySheet.AddPage(&m_rangeTestPage);
-	m_propertySheet.AddPage(&m_valueTestPage);
+	//m_propertySheet.AddPage(&m_valueTestPage);
 
 	if (!m_propertySheet.Create(this, WS_CHILD | WS_VISIBLE | WS_TABSTOP, 0))
 	{
-		TRACE(_T("Failed to create property sheet.\n"));
+		TRACE(_T("[ERR][SYSTEM] Failed to create property sheet.\n"));
 		return TRUE;
 	}
 
-	m_propertySheet.ModifyStyleEx(0, WS_EX_CONTROLPARENT);
+	m_propertySheet.ModifyStyle(WS_BORDER | WS_DLGFRAME | WS_THICKFRAME, 0, SWP_FRAMECHANGED);
+	m_propertySheet.ModifyStyleEx(WS_EX_CLIENTEDGE | WS_EX_STATICEDGE, WS_EX_CONTROLPARENT, SWP_FRAMECHANGED);
 #if 0
 	CWnd* pApplyButton = m_propertySheet.GetDlgItem(ID_APPLY_NOW);
 	if (pApplyButton != nullptr)
@@ -181,6 +227,7 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 #endif
 	LayoutPropertySheet();
 	initLogView();
+	LoadStartupSystemConfigFile();
 	CheckRadioButton(
 		IDC_MAIN_RDO_CAN,   // 그룹의 첫 번째 라디오 버튼 ID
 		IDC_MAIN_RDO_ETH,   // 그룹의 마지막 라디오 버튼 ID
@@ -189,6 +236,7 @@ BOOL CmassproductiontoolDlg::OnInitDialog()
 	MakeMainInterfaceControlsTransparent();
 	TraceMainInterfaceRadioState(_T("Default"));
 	MpCaptureChildLayout(this, m_initialClientSize, m_childLayouts);
+	TRACE(_T("[INFO][SYSTEM] Main dialog initialization completed.\n"));
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -372,8 +420,9 @@ HBRUSH CmassproductiontoolDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 			nControlId == IDC_MAIN_RDO_UART ||
 			nControlId == IDC_MAIN_RDO_ETH;
 		const BOOL bGroupBox = dwButtonStyle == BS_GROUPBOX;
+		const BOOL bPropertySheetFrame = nControlId == IDC_STATIC_PROP_SHEET_FRAME;
 
-		if (bMainInterfaceRadio || bGroupBox)
+		if (bMainInterfaceRadio || bGroupBox || bPropertySheetFrame)
 		{
 			pDC->SetBkMode(TRANSPARENT);
 			pDC->SetBkColor(m_backgroundColor);
@@ -411,10 +460,13 @@ void CmassproductiontoolDlg::LayoutPropertySheet()
 	ScreenToClient(&sheetRect);
 	pSheetFrame->ShowWindow(SW_HIDE);
 	m_propertySheet.MoveWindow(sheetRect);
+	m_propertySheet.Invalidate(FALSE);
 
 	CTabCtrl* pTab = m_propertySheet.GetTabControl();
 	if (pTab != nullptr && ::IsWindow(pTab->GetSafeHwnd()))
 	{
+		pTab->ModifyStyle(WS_BORDER | WS_DLGFRAME | WS_THICKFRAME, 0, SWP_FRAMECHANGED);
+		pTab->ModifyStyleEx(WS_EX_CLIENTEDGE | WS_EX_STATICEDGE, 0, SWP_FRAMECHANGED);
 		CRect pageRect;
 		m_propertySheet.GetClientRect(&pageRect);
 		pTab->AdjustRect(FALSE, &pageRect);
@@ -426,6 +478,10 @@ void CmassproductiontoolDlg::LayoutPropertySheet()
 			if (pPage != nullptr && ::IsWindow(pPage->GetSafeHwnd()))
 			{
 				pPage->MoveWindow(pageRect);
+				if (pPage == &m_rangeTestPage)
+				{
+					m_rangeTestPage.UpdateGridLayout();
+				}
 			}
 		}
 	}
@@ -435,10 +491,11 @@ int CmassproductiontoolDlg::initLogView()
 {
 	if (!m_logCtrl.SubclassDlgItem(IDC_MAIN_RICHEDIT2_SYS_LOG, this))
 	{
-		TRACE(_T("Failed to subclass log rich edit control.\n"));
+		TRACE(_T("[ERR][SYSTEM] Failed to subclass log rich edit control.\n"));
 		return -1;
 	}
 	MpSetTraceLogView(&m_logCtrl);
+	TRACE(_T("[INFO][SYSTEM] Rich edit log view connected.\n"));
 
 	m_logCtrl.SetOptions(ECOOP_OR, ECO_AUTOWORDSELECTION); // 단어 선택 등
 	m_logCtrl.SetFontSize(10);
@@ -463,16 +520,7 @@ int CmassproductiontoolDlg::initLogView()
 
 	m_font.CreateFontIndirect(&lf);
 	m_logCtrl.SetFont(&m_font);
-	// 로그 출력
-	for (int i = 0; i < 20; ++i)
-	{
-		CString msg;
-		msg.Format(_T("스크롤 테스트 로그 #%d"), i + 1);
-		m_logCtrl.AppendLog(LogLevel::DEBUG_U, msg);
-	}
-	m_logCtrl.AppendLog(LogLevel::INFO_U, _T("로그 시스템 초기화 완료"));
-	m_logCtrl.AppendLog(LogLevel::DEBUG_U, _T("디버그 메시지입니다"));
-	m_logCtrl.AppendLog(LogLevel::ERROR_U, _T("에러 발생!"));
+	m_logCtrl.AppendLog(LogLevel::INFO_U, _T("[INFO][SYSTEM] Log system initialized."));
 
 	// 전체 선택 해제 (커서를 맨 뒤로 이동)
 	long nEnd = m_logCtrl.GetTextLength();
@@ -481,6 +529,283 @@ int CmassproductiontoolDlg::initLogView()
 	// TODO: 여기에 구현 코드 추가.
 	return 0;
 }
+
+int CmassproductiontoolDlg::FindColumnIndex(const std::vector<CString>& columns, LPCTSTR columnName) const
+{
+	CString target(columnName);
+	target.Trim();
+	for (size_t i = 0; i < columns.size(); ++i)
+	{
+		CString current(columns[i]);
+		current.Trim();
+		if (current.CompareNoCase(target) == 0)
+		{
+			return static_cast<int>(i);
+		}
+	}
+	return -1;
+}
+
+BOOL CmassproductiontoolDlg::LoadStartupSystemConfigFile()
+{
+	TCHAR szWorkingDir[MAX_PATH] = { 0 };
+	if (GetCurrentDirectory(MAX_PATH, szWorkingDir) == 0)
+	{
+		TRACE(_T("[ERR][SYSTEM CFG] Failed to get working directory.\n"));
+		return FALSE;
+	}
+
+	CString strConfigPath(szWorkingDir);
+	if (!strConfigPath.IsEmpty() && strConfigPath.Right(1) != _T("\\"))
+	{
+		strConfigPath += _T("\\");
+	}
+	strConfigPath += _T("system_config.xlsx");
+
+	const DWORD dwAttributes = GetFileAttributes(strConfigPath);
+	if (dwAttributes == INVALID_FILE_ATTRIBUTES || (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+	{
+		TRACE(_T("[WARN][SYSTEM CFG] Startup config file not found. file=%s\n"), strConfigPath.GetString());
+		return FALSE;
+	}
+
+	TRACE(_T("[INFO][SYSTEM CFG] Startup config file found. file=%s\n"), strConfigPath.GetString());
+	return LoadSystemConfigFile(strConfigPath, TRUE);
+}
+
+BOOL CmassproductiontoolDlg::LoadSystemConfigFile(const CString& strFilePath, BOOL bLoadRangeGrid)
+{
+	BOOL bLoaded = FALSE;
+	TRACE(_T("[INFO][SYSTEM CFG] Config load started. file=%s\n"), strFilePath.GetString());
+
+	if (bLoadRangeGrid)
+	{
+		if (m_rangeTestPage.LoadRangeConfigFile(strFilePath))
+		{
+			bLoaded = TRUE;
+		}
+		else
+		{
+			TRACE(_T("[ERR][SYSTEM CFG] Failed to load sheet #1 to Range grid. file=%s\n"), strFilePath.GetString());
+		}
+	}
+
+	std::vector<CString> configColumns;
+	std::vector<std::vector<CString>> configRows;
+	if (CExcelXlsxHelper::LoadSheetAll(strFilePath, configColumns, configRows, 2))
+	{
+		DisplaySystemConfigList(configColumns, configRows);
+		ApplySystemConfigRows(configColumns, configRows);
+		bLoaded = TRUE;
+	}
+	else
+	{
+		TRACE(_T("[ERR][SYSTEM CFG] Failed to load sheet #2. file=%s\n"), strFilePath.GetString());
+	}
+
+	if (bLoaded)
+	{
+		m_decNormalStatic.SetDisplayText(_T("LOADED Config file "));
+		TRACE(_T("[INFO][SYSTEM CFG] Loaded config file. file=%s\n"), strFilePath.GetString());
+	}
+	else
+	{
+		TRACE(_T("[ERR][SYSTEM CFG] Config load failed. file=%s\n"), strFilePath.GetString());
+	}
+
+	return bLoaded;
+}
+
+void CmassproductiontoolDlg::UpdateOverallTestStatus(BOOL bAllCompleted, BOOL bAnyFail)
+{
+	if (m_decNormalStatic.GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+
+	if (bAnyFail)
+	{
+		m_decNormalStatic.SetDisplayText(_T("FAIL"));
+		m_decNormalStatic.SetThemeColor(MP_GRID_COLOR_DARK_RED);
+		TRACE(_T("[ERR][SYSTEM TEST] Overall test status = FAIL\n"));
+		return;
+	}
+
+	if (bAllCompleted)
+	{
+		m_decNormalStatic.SetDisplayText(_T("PASS"));
+		m_decNormalStatic.SetThemeColor(MP_GRID_COLOR_DARK_BLUE);
+		TRACE(_T("[INFO][SYSTEM TEST] Overall test status = PASS\n"));
+	}
+}
+
+void CmassproductiontoolDlg::ResetOverallTestStatus()
+{
+	if (m_decNormalStatic.GetSafeHwnd() == NULL)
+	{
+		return;
+	}
+
+	m_decNormalStatic.SetDisplayText(_T("LOADED Config file "));
+	m_decNormalStatic.SetThemeColor(MP_GRID_COLOR_DARK_GRAY);
+	m_decNormalStatic.SetTextColor(RGB(255, 255, 255));
+}
+
+void CmassproductiontoolDlg::DisplaySystemConfigList(const std::vector<CString>& columns, const std::vector<std::vector<CString>>& rows)
+{
+#ifdef IDC_MAIN_LIST
+	if (m_mainListCtrl.GetSafeHwnd() == NULL)
+	{
+		if (!m_mainListCtrl.SubclassDlgItem(IDC_MAIN_LIST, this))
+		{
+			TRACE(_T("[ERR][SYSTEM CFG] IDC_MAIN_LIST subclass failed.\n"));
+			return;
+		}
+		m_mainListCtrl.ModifyStyle(0, LVS_REPORT | LVS_SHOWSELALWAYS);
+		m_mainListCtrl.SetExtendedStyle(m_mainListCtrl.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	}
+
+	m_mainListCtrl.SetRedraw(FALSE);
+	m_mainListCtrl.DeleteAllItems();
+	CHeaderCtrl* pHeader = m_mainListCtrl.GetHeaderCtrl();
+	if (pHeader != NULL)
+	{
+		for (int nCol = pHeader->GetItemCount() - 1; nCol >= 0; --nCol)
+		{
+			m_mainListCtrl.DeleteColumn(nCol);
+		}
+	}
+
+	for (int nCol = 0; nCol < static_cast<int>(columns.size()); ++nCol)
+	{
+		CString strColumn = columns[nCol];
+		strColumn.Trim();
+		if (strColumn.IsEmpty())
+		{
+			strColumn.Format(_T("COL%d"), nCol + 1);
+		}
+		m_mainListCtrl.InsertColumn(nCol, strColumn, LVCFMT_LEFT, nCol == 1 ? 320 : 150);
+	}
+
+	const int nValueCol = FindColumnIndex(columns, _T("VALUE"));
+	for (int nRow = 0; nRow < static_cast<int>(rows.size()); ++nRow)
+	{
+		CString strFirst;
+		if (!rows[nRow].empty())
+		{
+			strFirst = rows[nRow][0];
+		}
+		const int nItem = m_mainListCtrl.InsertItem(nRow, strFirst);
+		for (int nCol = 1; nCol < static_cast<int>(columns.size()); ++nCol)
+		{
+			CString strText;
+			if (nCol < static_cast<int>(rows[nRow].size()))
+			{
+				strText = rows[nRow][nCol];
+			}
+			if (nCol == nValueCol)
+			{
+				DWORD value = 0;
+				if (MpTryParseUInt32(strText, value))
+				{
+					strText.Format(_T("%lu"), value);
+				}
+			}
+			m_mainListCtrl.SetItemText(nItem, nCol, strText);
+		}
+	}
+
+	m_mainListCtrl.SetRedraw(TRUE);
+	m_mainListCtrl.Invalidate();
+	TRACE(_T("[INFO][SYSTEM CFG] Sheet #2 displayed on IDC_MAIN_LIST. rows=%d\n"), static_cast<int>(rows.size()));
+#else
+	UNREFERENCED_PARAMETER(columns);
+	UNREFERENCED_PARAMETER(rows);
+	TRACE(_T("[WARN][SYSTEM CFG] IDC_MAIN_LIST is not defined. Sheet #2 list display skipped.\n"));
+#endif
+}
+
+void CmassproductiontoolDlg::ApplySystemConfigRows(const std::vector<CString>& columns, const std::vector<std::vector<CString>>& rows)
+{
+	m_timeoutConfig.Reset();
+	m_checkConfig.Reset();
+
+	int nGroupCol = FindColumnIndex(columns, _T("GROUP"));
+	int nItemCol = FindColumnIndex(columns, _T("ITEM"));
+	int nValueCol = FindColumnIndex(columns, _T("VALUE"));
+	if (nGroupCol < 0 && columns.size() >= 1)
+	{
+		nGroupCol = 0;
+	}
+	if (nItemCol < 0 && columns.size() >= 2)
+	{
+		nItemCol = 1;
+	}
+	if (nValueCol < 0 && columns.size() >= 3)
+	{
+		nValueCol = 2;
+	}
+
+	if (nGroupCol < 0 || nItemCol < 0 || nValueCol < 0)
+	{
+		TRACE(_T("[ERR][SYSTEM CFG] Cannot apply config. GROUP/ITEM/VALUE columns are missing.\n"));
+		return;
+	}
+
+	for (size_t nRow = 0; nRow < rows.size(); ++nRow)
+	{
+		if (nGroupCol >= static_cast<int>(rows[nRow].size()) ||
+			nItemCol >= static_cast<int>(rows[nRow].size()) ||
+			nValueCol >= static_cast<int>(rows[nRow].size()))
+		{
+			continue;
+		}
+
+		const CString strGroup = rows[nRow][nGroupCol];
+		const CString strItem = rows[nRow][nItemCol];
+		const CString strValue = rows[nRow][nValueCol];
+
+		CString strGroupUpper(strGroup);
+		strGroupUpper.Trim();
+		strGroupUpper.MakeUpper();
+
+		DWORD numericValue = 0;
+		MpTryParseUInt32(strValue, numericValue);
+
+		if (strGroupUpper == _T("TIMEOUT"))
+		{
+			m_timeoutConfig.SetTimeout(strItem, numericValue);
+			TRACE(_T("[INFO][SYSTEM CFG] Apply Timeout: %s = %lu ms\n"), strItem.GetString(), numericValue);
+		}
+		else
+		{
+			const BOOL bEnabled = numericValue != 0;
+			m_checkConfig.SetCheck(strGroup, strItem, bEnabled);
+			TRACE(_T("[INFO][SYSTEM CFG] Apply Check: %s / %s = %s\n"),
+				strGroup.GetString(),
+				strItem.GetString(),
+				bEnabled ? _T("ON") : _T("OFF"));
+		}
+	}
+
+	TRACE(_T("[INFO][SYSTEM CFG] Applied Timeout Summary: FTM=%lu, BootStatus=%lu, TestMode=%lu, DUTVersion=%lu, Ethernet=%lu, ModemInfo=%lu, ModemRF=%lu, FAN=%lu, CAN=%lu\n"),
+		m_timeoutConfig.ftmEnterNotiReceiveTimeoutMs,
+		m_timeoutConfig.bootStatusCheckCommandTimeoutMs,
+		m_timeoutConfig.testModeSettingCommandTimeoutMs,
+		m_timeoutConfig.dutVersionCheckCommandTimeoutMs,
+		m_timeoutConfig.ethernetTestCommandTimeoutMs,
+		m_timeoutConfig.modemInfoTestCommandTimeoutMs,
+		m_timeoutConfig.modemRfTestCommandTimeoutMs,
+		m_timeoutConfig.fanTestCommandTimeoutMs,
+		m_timeoutConfig.canTestCommandTimeoutMs);
+	TRACE(_T("[INFO][SYSTEM CFG] Applied Check Summary: FactoryNoti=%d, BootStatus=%d, MCU=%d, AP=%d, Modem=%d\n"),
+		m_checkConfig.performFactoryTestModeEnterNotiCheck,
+		m_checkConfig.performBootStatusCheck,
+		m_checkConfig.mcuBootCompleteCheck,
+		m_checkConfig.apBootCompleteCheck,
+		m_checkConfig.modemBootCompleteCheck);
+}
+
 void CmassproductiontoolDlg::OnBnClickedCancel()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
