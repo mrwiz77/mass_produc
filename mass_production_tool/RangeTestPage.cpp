@@ -385,7 +385,7 @@ void CRangeTestPage::InitGrid()
 
 	const int nButtonCol = nColumnCount - 1;
 
-	m_ctrlGrid.SetEditable(TRUE);
+	m_ctrlGrid.SetEditable(FALSE);
 	m_ctrlGrid.EnableDragAndDrop(FALSE);
 	m_ctrlGrid.SetTextBkColor(RGB(255, 255, 255));
 	m_ctrlGrid.SetTextColor(RGB(0, 0, 0));
